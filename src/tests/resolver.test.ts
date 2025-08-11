@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Resolver, ResolverCache } from '../core/resolver.js';
-import { Loader } from '../core/loader.js';
 import { PALResolverError } from '../exceptions/core.js';
 import { ComponentLibrary, PromptAssembly } from '../types/schema.js';
 
@@ -19,7 +18,7 @@ describe('ResolverCache', () => {
       description: 'Test library',
       type: 'trait',
       components: [],
-      metadata: {}
+      metadata: {},
     };
 
     cache.set('key1', library);
@@ -38,7 +37,7 @@ describe('ResolverCache', () => {
       description: 'Test library',
       type: 'trait',
       components: [],
-      metadata: {}
+      metadata: {},
     };
 
     expect(cache.has('key1')).toBe(false);
@@ -54,7 +53,7 @@ describe('ResolverCache', () => {
       description: 'Test library',
       type: 'trait',
       components: [],
-      metadata: {}
+      metadata: {},
     };
 
     cache.set('key1', library);
@@ -84,10 +83,10 @@ describe('Resolver', () => {
         name: 'helper',
         description: 'Helper component',
         content: 'You are helpful.',
-        metadata: {}
-      }
+        metadata: {},
+      },
     ],
-    metadata: {}
+    metadata: {},
   };
 
   const mockPromptAssembly: PromptAssembly = {
@@ -98,13 +97,13 @@ describe('Resolver', () => {
     imports: {},
     variables: [],
     composition: ['Hello world'],
-    metadata: {}
+    metadata: {},
   };
 
   beforeEach(() => {
     mockLoader = {
       loadComponentLibrary: vi.fn(),
-      loadPromptAssembly: vi.fn()
+      loadPromptAssembly: vi.fn(),
     };
     cache = new ResolverCache();
     resolver = new Resolver(mockLoader, cache);
@@ -116,8 +115,8 @@ describe('Resolver', () => {
       const promptAssembly: PromptAssembly = {
         ...mockPromptAssembly,
         imports: {
-          'lib1': './library1.pal.lib'
-        }
+          lib1: './library1.pal.lib',
+        },
       };
 
       mockLoader.loadComponentLibrary.mockResolvedValue(mockLibrary);
@@ -125,15 +124,17 @@ describe('Resolver', () => {
       const result = await resolver.resolveDependencies(promptAssembly);
 
       expect(result).toEqual({ lib1: mockLibrary });
-      expect(mockLoader.loadComponentLibrary).toHaveBeenCalledWith('./library1.pal.lib');
+      expect(mockLoader.loadComponentLibrary).toHaveBeenCalledWith(
+        './library1.pal.lib'
+      );
     });
 
     it('should handle URL imports', async () => {
       const promptAssembly: PromptAssembly = {
         ...mockPromptAssembly,
         imports: {
-          'lib1': 'https://example.com/library1.pal.lib'
-        }
+          lib1: 'https://example.com/library1.pal.lib',
+        },
       };
 
       mockLoader.loadComponentLibrary.mockResolvedValue(mockLibrary);
@@ -141,15 +142,17 @@ describe('Resolver', () => {
       const result = await resolver.resolveDependencies(promptAssembly);
 
       expect(result).toEqual({ lib1: mockLibrary });
-      expect(mockLoader.loadComponentLibrary).toHaveBeenCalledWith('https://example.com/library1.pal.lib');
+      expect(mockLoader.loadComponentLibrary).toHaveBeenCalledWith(
+        'https://example.com/library1.pal.lib'
+      );
     });
 
     it('should use cached libraries', async () => {
       const promptAssembly: PromptAssembly = {
         ...mockPromptAssembly,
         imports: {
-          'lib1': './library1.pal.lib'
-        }
+          lib1: './library1.pal.lib',
+        },
       };
 
       cache.set('./library1.pal.lib', mockLibrary);
@@ -164,26 +167,30 @@ describe('Resolver', () => {
       const promptAssembly: PromptAssembly = {
         ...mockPromptAssembly,
         imports: {
-          'lib1': './library1.pal.lib'
-        }
+          lib1: './library1.pal.lib',
+        },
       };
 
-      mockLoader.loadComponentLibrary.mockRejectedValue(new Error('File not found'));
+      mockLoader.loadComponentLibrary.mockRejectedValue(
+        new Error('File not found')
+      );
 
-      await expect(resolver.resolveDependencies(promptAssembly))
-        .rejects.toThrow(PALResolverError);
+      await expect(
+        resolver.resolveDependencies(promptAssembly)
+      ).rejects.toThrow(PALResolverError);
     });
 
     it('should handle unsupported file types', async () => {
       const promptAssembly: PromptAssembly = {
         ...mockPromptAssembly,
         imports: {
-          'invalid': './invalid.txt'
-        }
+          invalid: './invalid.txt',
+        },
       };
 
-      await expect(resolver.resolveDependencies(promptAssembly))
-        .rejects.toThrow(PALResolverError);
+      await expect(
+        resolver.resolveDependencies(promptAssembly)
+      ).rejects.toThrow(PALResolverError);
     });
   });
 
@@ -191,14 +198,17 @@ describe('Resolver', () => {
     it('should validate existing component references', () => {
       const promptAssembly: PromptAssembly = {
         ...mockPromptAssembly,
-        composition: ['{{ lib1.helper }} says hello']
+        composition: ['{{ lib1.helper }} says hello'],
       };
 
       const resolvedLibraries = {
-        lib1: mockLibrary
+        lib1: mockLibrary,
       };
 
-      const errors = resolver.validateReferences(promptAssembly, resolvedLibraries);
+      const errors = resolver.validateReferences(
+        promptAssembly,
+        resolvedLibraries
+      );
 
       expect(errors).toEqual([]);
     });
@@ -206,12 +216,15 @@ describe('Resolver', () => {
     it('should detect unknown import aliases', () => {
       const promptAssembly: PromptAssembly = {
         ...mockPromptAssembly,
-        composition: ['{{ unknown.helper }} says hello']
+        composition: ['{{ unknown.helper }} says hello'],
       };
 
       const resolvedLibraries = {};
 
-      const errors = resolver.validateReferences(promptAssembly, resolvedLibraries);
+      const errors = resolver.validateReferences(
+        promptAssembly,
+        resolvedLibraries
+      );
 
       expect(errors).toContain('Unknown import alias: unknown');
     });
@@ -219,29 +232,37 @@ describe('Resolver', () => {
     it('should detect missing components', () => {
       const promptAssembly: PromptAssembly = {
         ...mockPromptAssembly,
-        composition: ['{{ lib1.missing }} says hello']
+        composition: ['{{ lib1.missing }} says hello'],
       };
 
       const resolvedLibraries = {
-        lib1: mockLibrary
+        lib1: mockLibrary,
       };
 
-      const errors = resolver.validateReferences(promptAssembly, resolvedLibraries);
+      const errors = resolver.validateReferences(
+        promptAssembly,
+        resolvedLibraries
+      );
 
-      expect(errors).toContain("Component 'missing' not found in library 'lib1'. Available: helper");
+      expect(errors).toContain(
+        "Component 'missing' not found in library 'lib1'. Available: helper"
+      );
     });
 
     it('should handle references with whitespace', () => {
       const promptAssembly: PromptAssembly = {
         ...mockPromptAssembly,
-        composition: ['{{  lib1.helper  }} says hello']
+        composition: ['{{  lib1.helper  }} says hello'],
       };
 
       const resolvedLibraries = {
-        lib1: mockLibrary
+        lib1: mockLibrary,
       };
 
-      const errors = resolver.validateReferences(promptAssembly, resolvedLibraries);
+      const errors = resolver.validateReferences(
+        promptAssembly,
+        resolvedLibraries
+      );
 
       expect(errors).toEqual([]);
     });
@@ -252,60 +273,71 @@ describe('Resolver', () => {
       const promptAssembly: PromptAssembly = {
         ...mockPromptAssembly,
         imports: {
-          'lib1': '/absolute/path/library1.pal.lib'
-        }
+          lib1: '/absolute/path/library1.pal.lib',
+        },
       };
 
       mockLoader.loadComponentLibrary.mockResolvedValue(mockLibrary);
 
       await resolver.resolveDependencies(promptAssembly, '/some/base/path');
 
-      expect(mockLoader.loadComponentLibrary).toHaveBeenCalledWith('/absolute/path/library1.pal.lib');
+      expect(mockLoader.loadComponentLibrary).toHaveBeenCalledWith(
+        '/absolute/path/library1.pal.lib'
+      );
     });
 
     it('should resolve HTTP URLs', async () => {
       const promptAssembly: PromptAssembly = {
         ...mockPromptAssembly,
         imports: {
-          'lib1': 'http://example.com/library1.pal.lib'
-        }
+          lib1: 'http://example.com/library1.pal.lib',
+        },
       };
 
       mockLoader.loadComponentLibrary.mockResolvedValue(mockLibrary);
 
       await resolver.resolveDependencies(promptAssembly);
 
-      expect(mockLoader.loadComponentLibrary).toHaveBeenCalledWith('http://example.com/library1.pal.lib');
+      expect(mockLoader.loadComponentLibrary).toHaveBeenCalledWith(
+        'http://example.com/library1.pal.lib'
+      );
     });
 
     it('should resolve HTTPS URLs', async () => {
       const promptAssembly: PromptAssembly = {
         ...mockPromptAssembly,
         imports: {
-          'lib1': 'https://example.com/library1.pal.lib'
-        }
+          lib1: 'https://example.com/library1.pal.lib',
+        },
       };
 
       mockLoader.loadComponentLibrary.mockResolvedValue(mockLibrary);
 
       await resolver.resolveDependencies(promptAssembly);
 
-      expect(mockLoader.loadComponentLibrary).toHaveBeenCalledWith('https://example.com/library1.pal.lib');
+      expect(mockLoader.loadComponentLibrary).toHaveBeenCalledWith(
+        'https://example.com/library1.pal.lib'
+      );
     });
 
     it('should handle relative path resolution with base path', async () => {
       const promptAssembly: PromptAssembly = {
         ...mockPromptAssembly,
         imports: {
-          'lib1': './library1.pal.lib'
-        }
+          lib1: './library1.pal.lib',
+        },
       };
 
       mockLoader.loadComponentLibrary.mockResolvedValue(mockLibrary);
 
-      await resolver.resolveDependencies(promptAssembly, '/base/path/prompt.pal');
+      await resolver.resolveDependencies(
+        promptAssembly,
+        '/base/path/prompt.pal'
+      );
 
-      expect(mockLoader.loadComponentLibrary).toHaveBeenCalledWith('/base/path/library1.pal.lib');
+      expect(mockLoader.loadComponentLibrary).toHaveBeenCalledWith(
+        '/base/path/library1.pal.lib'
+      );
     });
   });
 });

@@ -1,15 +1,20 @@
 #!/usr/bin/env node
 
 import { readFile, writeFile } from 'fs/promises';
-import { resolve, dirname } from 'path';
+import { resolve } from 'path';
 import { Command } from 'commander';
 import { glob } from 'glob';
 import * as kleur from 'kleur';
 import { PromptCompiler } from './core/compiler.js';
-import { PromptExecutor, MockLLMClient, OpenAIClient, AnthropicClient } from './core/executor.js';
+import {
+  PromptExecutor,
+  LLMClient,
+  MockLLMClient,
+  OpenAIClient,
+  AnthropicClient,
+} from './core/executor.js';
 import { Loader } from './core/loader.js';
 import { PALError } from './exceptions/core.js';
-import { PromptAssembly } from './types/schema.js';
 
 const program = new Command();
 
@@ -34,8 +39,10 @@ function handleError(error: unknown): void {
  * Check if a file is a prompt assembly file (.pal or .yml without .lib)
  */
 function isPromptAssemblyFile(filePath: string): boolean {
-  return filePath.endsWith('.pal') || 
-    (filePath.endsWith('.yml') && !filePath.includes('.lib.yml'));
+  return (
+    filePath.endsWith('.pal') ||
+    (filePath.endsWith('.yml') && !filePath.includes('.lib.yml'))
+  );
 }
 
 /**
@@ -83,7 +90,7 @@ function createLLMClient(
   provider: string,
   apiKey?: string,
   mockMessage?: string
-) {
+): LLMClient {
   switch (provider) {
     case 'openai':
       return new OpenAIClient(apiKey);
@@ -105,34 +112,32 @@ async function getFilesToValidate(
   recursive: boolean
 ): Promise<string[]> {
   const files: string[] = [];
-  
+
   try {
-    const stat = await import('fs/promises').then(fs => fs.stat(path));
-    
+    const stat = await import('fs/promises').then((fs) => fs.stat(path));
+
     if (stat.isFile()) {
       files.push(path);
     } else if (stat.isDirectory()) {
-      const patterns = [
-        '*.pal',
-        '*.pal.lib',
-        '*.yml',
-      ];
-      
+      const patterns = ['*.pal', '*.pal.lib', '*.yml'];
+
       for (const pattern of patterns) {
-        const globPattern = recursive ? `${path}/**/${pattern}` : `${path}/${pattern}`;
+        const globPattern = recursive
+          ? `${path}/**/${pattern}`
+          : `${path}/${pattern}`;
         const matched = await glob(globPattern);
         files.push(...matched);
       }
-      
+
       // Filter to only include PAL-related files
-      return files.filter(file => 
-        isPromptAssemblyFile(file) || isLibraryFile(file)
+      return files.filter(
+        (file) => isPromptAssemblyFile(file) || isLibraryFile(file)
       );
     }
-  } catch (error) {
+  } catch {
     throw new Error(`Cannot access path: ${path}`);
   }
-  
+
   return files;
 }
 
@@ -152,14 +157,14 @@ async function validateSingleFile(
   try {
     if (isPromptAssemblyFile(filePath)) {
       const promptAssembly = await loader.loadPromptAssembly(filePath);
-      
+
       // Additional validation - check template variables
       const templateVars = compiler.analyzeTemplateVariables(promptAssembly);
-      const definedVars = new Set(promptAssembly.variables.map(v => v.name));
+      const definedVars = new Set(promptAssembly.variables.map((v) => v.name));
       const undefinedVars = [...templateVars].filter(
-        v => !definedVars.has(v) && !['loop', 'super'].includes(v) // Nunjucks builtins
+        (v) => !definedVars.has(v) && !['loop', 'super'].includes(v) // Nunjucks builtins
       );
-      
+
       if (undefinedVars.length > 0) {
         return {
           fileType: 'Assembly',
@@ -168,7 +173,7 @@ async function validateSingleFile(
           isValid: false,
         };
       }
-      
+
       return {
         fileType: 'Assembly',
         status: kleur.green('Valid'),
@@ -176,7 +181,7 @@ async function validateSingleFile(
         isValid: true,
       };
     }
-    
+
     if (isLibraryFile(filePath)) {
       await loader.loadComponentLibrary(filePath);
       return {
@@ -186,7 +191,7 @@ async function validateSingleFile(
         isValid: true,
       };
     }
-    
+
     return {
       fileType: 'Unknown',
       status: kleur.yellow('Skipped'),
@@ -195,8 +200,9 @@ async function validateSingleFile(
     };
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
-    const truncated = errorMsg.length > 50 ? errorMsg.substring(0, 50) + '...' : errorMsg;
-    
+    const truncated =
+      errorMsg.length > 50 ? errorMsg.substring(0, 50) + '...' : errorMsg;
+
     return {
       fileType: 'Unknown',
       status: kleur.red('Invalid'),
@@ -220,38 +226,47 @@ function displayValidationResults(
   basePath: string
 ): void {
   console.log(kleur.cyan('\nPAL Validation Results\n'));
-  
+
   const maxFileLength = Math.max(
-    ...results.map(r => r.filePath.replace(basePath + '/', '').length),
+    ...results.map((r) => r.filePath.replace(basePath + '/', '').length),
     'File'.length
   );
-  const maxTypeLength = Math.max(...results.map(r => r.fileType.length), 'Type'.length);
+  const maxTypeLength = Math.max(
+    ...results.map((r) => r.fileType.length),
+    'Type'.length
+  );
   const maxStatusLength = 8; // Account for color codes
-  
+
   // Header
   console.log(
-    kleur.cyan('File'.padEnd(maxFileLength)) + ' | ' +
-    kleur.magenta('Type'.padEnd(maxTypeLength)) + ' | ' +
-    kleur.green('Status'.padEnd(maxStatusLength)) + ' | ' +
-    kleur.red('Issues')
+    kleur.cyan('File'.padEnd(maxFileLength)) +
+      ' | ' +
+      kleur.magenta('Type'.padEnd(maxTypeLength)) +
+      ' | ' +
+      kleur.green('Status'.padEnd(maxStatusLength)) +
+      ' | ' +
+      kleur.red('Issues')
   );
-  
+
   console.log('-'.repeat(maxFileLength + maxTypeLength + maxStatusLength + 20));
-  
+
   // Results
   for (const result of results) {
     const relativePath = result.filePath.replace(basePath + '/', '');
     console.log(
-      kleur.cyan(relativePath.padEnd(maxFileLength)) + ' | ' +
-      kleur.magenta(result.fileType.padEnd(maxTypeLength)) + ' | ' +
-      result.status.padEnd(maxStatusLength) + ' | ' +
-      kleur.red(result.issues)
+      kleur.cyan(relativePath.padEnd(maxFileLength)) +
+        ' | ' +
+        kleur.magenta(result.fileType.padEnd(maxTypeLength)) +
+        ' | ' +
+        result.status.padEnd(maxStatusLength) +
+        ' | ' +
+        kleur.red(result.issues)
     );
   }
-  
-  const validCount = results.filter(r => r.isValid).length;
+
+  const validCount = results.filter((r) => r.isValid).length;
   const totalCount = results.length;
-  
+
   console.log(kleur.bold(`\nSummary: ${validCount}/${totalCount} files valid`));
 }
 
@@ -273,13 +288,16 @@ program
   .action(async (palFile: string, options) => {
     try {
       const vars = await loadVariables(options.vars, options.varsFile);
-      
+
       const compiler = new PromptCompiler();
       const compiledPrompt = await compiler.compileFromFile(palFile, vars);
-      
+
       if (options.output) {
         await writeFile(options.output, compiledPrompt, 'utf-8');
-        console.log(kleur.green('✓'), `Compiled prompt written to ${options.output}`);
+        console.log(
+          kleur.green('✓'),
+          `Compiled prompt written to ${options.output}`
+        );
       } else {
         if (options.noFormat) {
           console.log(compiledPrompt);
@@ -314,13 +332,17 @@ program
     try {
       const vars = await loadVariables(options.vars, options.varsFile);
       const llmClient = createLLMClient(options.provider, options.apiKey);
-      
+
       const compiler = new PromptCompiler();
       const loader = new Loader();
-      
+
       const promptAssembly = await loader.loadPromptAssembly(palFile);
-      const compiledPrompt = await compiler.compile(promptAssembly, vars, palFile);
-      
+      const compiledPrompt = await compiler.compile(
+        promptAssembly,
+        vars,
+        palFile
+      );
+
       const executor = new PromptExecutor(llmClient, options.logFile);
       const result = await executor.execute(
         compiledPrompt,
@@ -329,10 +351,14 @@ program
         parseFloat(options.temperature),
         options.maxTokens ? parseInt(options.maxTokens, 10) : undefined
       );
-      
+
       if (options.output) {
         if (options.jsonOutput) {
-          await writeFile(options.output, JSON.stringify(result, null, 2), 'utf-8');
+          await writeFile(
+            options.output,
+            JSON.stringify(result, null, 2),
+            'utf-8'
+          );
         } else {
           await writeFile(options.output, result.response, 'utf-8');
         }
@@ -348,7 +374,7 @@ program
           console.log(
             kleur.dim(
               `Tokens: ${result.inputTokens}→${result.outputTokens} | ` +
-              `Time: ${result.executionTimeMs.toFixed(1)}ms`
+                `Time: ${result.executionTimeMs.toFixed(1)}ms`
             )
           );
         }
@@ -368,14 +394,14 @@ program
     try {
       const loader = new Loader();
       const compiler = new PromptCompiler();
-      
+
       const filesToCheck = await getFilesToValidate(path, options.recursive);
-      
+
       if (filesToCheck.length === 0) {
         console.log(kleur.yellow('No PAL files found to validate'));
         return;
       }
-      
+
       const results: Array<{
         filePath: string;
         fileType: string;
@@ -383,15 +409,15 @@ program
         issues: string;
         isValid: boolean;
       }> = [];
-      
+
       for (const filePath of filesToCheck) {
         const result = await validateSingleFile(filePath, loader, compiler);
         results.push({ filePath, ...result });
       }
-      
+
       displayValidationResults(results, resolve(path));
-      
-      const validFiles = results.filter(r => r.isValid).length;
+
+      const validFiles = results.filter((r) => r.isValid).length;
       if (validFiles < results.length) {
         process.exit(1);
       }
@@ -408,10 +434,10 @@ program
   .action(async (palFile: string) => {
     try {
       const loader = new Loader();
-      
+
       if (isLibraryFile(palFile)) {
         const library = await loader.loadComponentLibrary(palFile);
-        
+
         console.log(kleur.cyan(`Component Library: ${library.library_id}`));
         console.log(kleur.dim('─'.repeat(50)));
         console.log(`Library ID: ${kleur.cyan(library.library_id)}`);
@@ -419,13 +445,13 @@ program
         console.log(`Type: ${kleur.magenta(library.type)}`);
         console.log(`Description: ${library.description}`);
         console.log(`Components: ${library.components.length}`);
-        
+
         if (library.components.length > 0) {
           console.log(kleur.cyan('\nComponents:'));
           for (const component of library.components) {
             console.log(
               `  • ${kleur.cyan(component.name)}: ${
-                component.description.length > 50 
+                component.description.length > 50
                   ? component.description.substring(0, 50) + '...'
                   : component.description
               } (${component.content.length} chars)`
@@ -434,7 +460,7 @@ program
         }
       } else {
         const assembly = await loader.loadPromptAssembly(palFile);
-        
+
         console.log(kleur.cyan(`Prompt Assembly: ${assembly.id}`));
         console.log(kleur.dim('─'.repeat(50)));
         console.log(`ID: ${kleur.cyan(assembly.id)}`);
@@ -446,17 +472,17 @@ program
         console.log(`Variables: ${assembly.variables.length}`);
         console.log(`Imports: ${Object.keys(assembly.imports).length}`);
         console.log(`Composition Items: ${assembly.composition.length}`);
-        
+
         if (assembly.variables.length > 0) {
           console.log(kleur.cyan('\nVariables:'));
           for (const variable of assembly.variables) {
             console.log(
               `  • ${kleur.cyan(variable.name)} (${kleur.magenta(variable.type)}): ` +
-              `${variable.description} ${variable.required ? kleur.green('✓') : kleur.red('✗')}`
+                `${variable.description} ${variable.required ? kleur.green('✓') : kleur.red('✗')}`
             );
           }
         }
-        
+
         if (Object.keys(assembly.imports).length > 0) {
           console.log(kleur.cyan('\nImports:'));
           for (const [alias, path] of Object.entries(assembly.imports)) {

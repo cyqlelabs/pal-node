@@ -39,9 +39,9 @@ export class MockLLMClient implements LLMClient {
   async generate(
     prompt: string,
     model: string,
-    temperature = 0.7,
-    maxTokens?: number,
-    options?: Record<string, unknown>
+    _temperature = 0.7,
+    _maxTokens?: number,
+    _options?: Record<string, unknown>
   ): Promise<{
     response: string;
     inputTokens: number | undefined;

@@ -197,7 +197,7 @@ export class PromptCompiler {
       if (varDef) {
         try {
           typedVars[name] = this.convertVariable(value, varDef.type);
-        } catch (error) {
+        } catch {
           throw new PALCompilerError(
             `Type error for variable '${name}': expected ${varDef.type}, got ${typeof value}`,
             {

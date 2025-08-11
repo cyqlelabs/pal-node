@@ -13,6 +13,20 @@ export default [
       parserOptions: {
         ecmaVersion: 2022,
         sourceType: 'module'
+      },
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        fetch: 'readonly',
+        Response: 'readonly',
+        AbortController: 'readonly',
+        URL: 'readonly',
+        NodeJS: 'readonly',
+        global: 'readonly'
       }
     },
     plugins: {
