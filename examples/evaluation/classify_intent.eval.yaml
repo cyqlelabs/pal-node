@@ -1,0 +1,86 @@
+pal_version: "1.0"
+prompt_id: "classify-user-intent"
+target_version: "1.0.0"
+description: "Test suite for the intent classification prompt"
+
+test_cases:
+  - name: "simple_navigation_intent"
+    description: "Test classification of a clear navigation request"
+    variables:
+      user_query: "Take me to google.com"
+      available_intents:
+        - name: "navigate_to_url"
+          description: "User wants to visit a specific website"
+        - name: "search_query"
+          description: "User wants to search for information"
+        - name: "help_request"
+          description: "User needs help or assistance"
+    assertions:
+      - type: "json_valid"
+        config: {}
+      - type: "json_field_equals"
+        config:
+          path: "$.intent"
+          value: "navigate_to_url"
+      - type: "contains"
+        config:
+          text: "confidence"
+          case_sensitive: false
+
+  - name: "search_query_intent"
+    description: "Test classification of a search request"
+    variables:
+      user_query: "What is the weather like in New York?"
+      available_intents:
+        - name: "navigate_to_url"
+          description: "User wants to visit a specific website"
+        - name: "search_query"
+          description: "User wants to search for information"
+        - name: "help_request"
+          description: "User needs help or assistance"
+    assertions:
+      - type: "json_valid"
+        config: {}
+      - type: "json_field_equals"
+        config:
+          path: "$.intent"
+          value: "search_query"
+      - type: "regex_match"
+        config:
+          pattern: "\"confidence\"\\s*:\\s*\\d+\\.\\d+"
+
+  - name: "ambiguous_query"
+    description: "Test handling of unclear or ambiguous queries"
+    variables:
+      user_query: "help"
+      available_intents:
+        - name: "navigate_to_url"
+          description: "User wants to visit a specific website"
+        - name: "search_query"
+          description: "User wants to search for information"
+        - name: "help_request"
+          description: "User needs help or assistance"
+    assertions:
+      - type: "json_valid"
+        config: {}
+      - type: "json_field_equals"
+        config:
+          path: "$.intent"
+          value: "help_request"
+
+  - name: "response_length_check"
+    description: "Ensure response is reasonably sized"
+    variables:
+      user_query: "Book a flight to Paris"
+      available_intents:
+        - name: "booking_request"
+          description: "User wants to make a reservation or booking"
+        - name: "information_request"
+          description: "User wants information about something"
+    assertions:
+      - type: "json_valid"
+        config: {}
+      - type: "length"
+        config:
+          min_length: 50
+          max_length: 1000

@@ -1,0 +1,73 @@
+pal_version: "1.0"
+library_id: "com.example.formats.output"
+version: "1.0.0"
+description: "A collection of structured output format instructions."
+type: "output_schema"
+
+components:
+  - name: "json_object"
+    description: "Ensures output is a valid JSON object"
+    content: |
+      Respond with a valid JSON object only. Do not include any explanatory text, markdown formatting, or other content before or after the JSON.
+
+  - name: "markdown_list"
+    description: "Formats response as a markdown list"
+    content: |
+      Format your response as a markdown list:
+      - Use bullet points for main items
+      - Use sub-bullets for details
+      - Keep items concise and clear
+
+  - name: "structured_analysis"
+    description: "Provides a structured analysis format"
+    content: |
+      Structure your analysis as follows:
+      
+      ## Summary
+      Brief overview of the key points
+      
+      ## Analysis
+      Detailed examination of the topic
+      
+      ## Conclusions
+      Key takeaways and recommendations
+      
+      ## Next Steps
+      Suggested actions or further considerations
+
+  - name: "comparison_table"
+    description: "Formats response as a comparison table"
+    content: |
+      Present your comparison in a markdown table format:
+      
+      | Aspect | Option A | Option B | Winner |
+      |--------|----------|----------|---------|
+      | ... | ... | ... | ... |
+      
+      Include a brief summary after the table.
+
+  - name: "step_by_step"
+    description: "Formats response as numbered steps"
+    content: |
+      Present your response as numbered steps:
+      
+      1. **Step 1:** Clear description of what to do
+      2. **Step 2:** Next action with any important details
+      3. **Step 3:** Continue with logical progression
+      
+      Use sub-steps (a, b, c) for complex steps if needed.
+
+  - name: "executive_summary"
+    description: "Formats response as an executive summary"
+    content: |
+      Structure as an executive summary:
+      
+      **Key Findings:** Most important discoveries or insights
+      
+      **Recommendations:** Specific actionable suggestions  
+      
+      **Impact:** Expected outcomes and benefits
+      
+      **Timeline:** When results can be expected
+      
+      Keep each section concise and focused on decision-makers' needs.

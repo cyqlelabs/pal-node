@@ -1,0 +1,205 @@
+pal_version: "1.0"
+library_id: "com.example.examples.demonstrations"
+version: "1.0.0"
+description: "A collection of example demonstrations for few-shot learning and task illustration."
+type: "examples"
+
+components:
+  - name: "sentiment_classification"
+    description: "Examples for sentiment classification tasks"
+    content: |
+      ## Example Classifications
+      
+      **Example 1:**
+      Input: "I absolutely love this new feature! It makes my work so much easier."
+      Classification: Positive
+      Confidence: 0.92
+      Reasoning: Contains strong positive language ("absolutely love") and expresses clear benefit
+      
+      **Example 2:**
+      Input: "The interface is confusing and the documentation is incomplete."
+      Classification: Negative  
+      Confidence: 0.85
+      Reasoning: Multiple complaints about usability and quality issues
+      
+      **Example 3:**
+      Input: "The product works as described. Nothing particularly good or bad to report."
+      Classification: Neutral
+      Confidence: 0.78
+      Reasoning: Factual statement without emotional language or strong opinions
+
+  - name: "api_documentation_format"
+    description: "Examples showing proper API documentation format"
+    content: |
+      ## API Documentation Examples
+      
+      **Example Endpoint Documentation:**
+      ```
+      ### GET /api/users/{id}
+      
+      **Description:** Retrieve a specific user by their unique identifier
+      
+      **Parameters:**
+      - `id` (path, required): User's unique identifier (integer)
+      - `include` (query, optional): Comma-separated list of related data to include
+      
+      **Response:**
+      ```json
+      {
+        "id": 123,
+        "username": "john_doe",
+        "email": "john@example.com", 
+        "created_at": "2023-01-15T10:30:00Z"
+      }
+      ```
+      
+      **Status Codes:**
+      - 200: Success
+      - 404: User not found
+      - 400: Invalid parameters
+      ```
+
+  - name: "code_review_feedback"
+    description: "Examples of constructive code review feedback"
+    content: |
+      ## Code Review Examples
+      
+      **Example 1 - Performance Issue:**
+      ```
+      Issue: Using nested loops for array filtering (lines 45-52)
+      Severity: Medium
+      Suggestion: Consider using Array.filter() with Set lookup for O(n) complexity
+      Example:
+      const allowedIds = new Set(validIds);
+      const filtered = items.filter(item => allowedIds.has(item.id));
+      ```
+      
+      **Example 2 - Security Concern:**  
+      ```
+      Issue: SQL query constructed with string concatenation (line 78)
+      Severity: High
+      Suggestion: Use parameterized queries to prevent SQL injection
+      Example:
+      const query = "SELECT * FROM users WHERE id = ?";
+      db.execute(query, [userId]);
+      ```
+      
+      **Example 3 - Code Style:**
+      ```
+      Issue: Inconsistent naming convention (camelCase vs snake_case)
+      Severity: Low
+      Suggestion: Use consistent camelCase throughout for JavaScript variables
+      ```
+
+  - name: "user_story_format"
+    description: "Examples of well-formatted user stories"
+    content: |
+      ## User Story Examples
+      
+      **Example 1 - Feature Request:**
+      ```
+      As a customer support agent
+      I want to view a customer's order history in chronological order
+      So that I can quickly understand their experience with our service
+      
+      Acceptance Criteria:
+      - Orders are displayed newest to oldest by default
+      - Each order shows date, total amount, and status
+      - Clicking an order expands to show item details
+      - Page loads within 2 seconds for up to 100 orders
+      ```
+      
+      **Example 2 - Bug Fix:**
+      ```
+      As a mobile app user  
+      I want the app to remember my login credentials
+      So that I don't have to re-enter them every time I open the app
+      
+      Acceptance Criteria:
+      - Login state persists between app sessions
+      - Biometric authentication option is available
+      - Session expires after 30 days of inactivity
+      - User can manually log out to clear stored credentials
+      ```
+
+  - name: "error_message_templates"
+    description: "Examples of user-friendly error messages"
+    content: |
+      ## Error Message Examples
+      
+      **Example 1 - Validation Error:**
+      ```
+      ❌ Invalid email format
+      Please enter a valid email address (example: user@domain.com)
+      ```
+      
+      **Example 2 - Authentication Error:**
+      ```
+      🔒 Login failed
+      The username or password you entered is incorrect. 
+      [Forgot password?] [Try again]
+      ```
+      
+      **Example 3 - System Error:**
+      ```
+      ⚠️ Something went wrong
+      We're experiencing technical difficulties. Please try again in a few minutes.
+      Error ID: ERR-2024-0811-1234 (for support reference)
+      ```
+      
+      **Example 4 - Rate Limiting:**
+      ```
+      ⏱️ Too many requests
+      Please wait 60 seconds before trying again.
+      This helps us maintain service quality for all users.
+      ```
+
+  - name: "json_api_responses"
+    description: "Examples of consistent JSON API response formats"
+    content: |
+      ## JSON Response Examples
+      
+      **Success Response:**
+      ```json
+      {
+        "success": true,
+        "data": {
+          "id": 123,
+          "name": "Example Item"
+        },
+        "message": "Item created successfully",
+        "timestamp": "2024-01-15T10:30:00Z"
+      }
+      ```
+      
+      **Error Response:**
+      ```json
+      {
+        "success": false,
+        "error": {
+          "code": "VALIDATION_ERROR",
+          "message": "Required fields are missing",
+          "details": [
+            {
+              "field": "email",
+              "error": "Email address is required"
+            }
+          ]
+        },
+        "timestamp": "2024-01-15T10:30:00Z"
+      }
+      ```
+      
+      **Paginated Response:**
+      ```json
+      {
+        "success": true,
+        "data": [...],
+        "pagination": {
+          "page": 1,
+          "per_page": 20,
+          "total": 157,
+          "total_pages": 8
+        }
+      }
+      ```

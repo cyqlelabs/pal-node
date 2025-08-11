@@ -1,0 +1,87 @@
+pal_version: "1.0"
+library_id: "com.example.tasks.common"
+version: "1.0.0"
+description: "A collection of common task definitions for various AI applications."
+type: "task"
+
+components:
+  - name: "text_summarization"
+    description: "Task definition for summarizing text content"
+    content: |
+      Your task is to create a concise, accurate summary of the provided text. Focus on:
+      - Capturing the main points and key arguments
+      - Preserving the original meaning and intent
+      - Maintaining appropriate length for the content type
+      - Highlighting any actionable insights or conclusions
+
+  - name: "sentiment_analysis"
+    description: "Task definition for analyzing sentiment in text"
+    content: |
+      Analyze the sentiment and emotional tone of the provided text. Consider:
+      - Overall sentiment (positive, negative, neutral)
+      - Emotional intensity and confidence level
+      - Specific emotions present (joy, anger, fear, etc.)
+      - Context and nuance that might affect interpretation
+      - Any mixed or complex emotional states
+
+  - name: "code_generation"
+    description: "Task definition for generating code solutions"
+    content: |
+      Generate clean, functional code that meets the specified requirements. Ensure:
+      - Code follows language-specific best practices and conventions
+      - Solution is efficient and maintainable
+      - Appropriate error handling and edge cases are considered
+      - Code is well-structured with clear variable names
+      - Comments are included where necessary for clarity
+
+  - name: "question_answering"
+    description: "Task definition for answering questions based on context"
+    content: |
+      Provide accurate, helpful answers to the given question(s). Your approach should:
+      - Base answers primarily on the provided context or knowledge
+      - Clearly indicate when information is uncertain or unavailable
+      - Structure complex answers in a logical, easy-to-follow manner
+      - Include relevant examples or clarifications when helpful
+      - Acknowledge multiple perspectives when appropriate
+
+  - name: "translation"
+    description: "Task definition for translating text between languages"
+    content: |
+      Translate the provided text accurately while preserving:
+      - Original meaning and intent
+      - Appropriate tone and style for the target language
+      - Cultural context and idioms where applicable
+      - Technical terminology when relevant
+      - Formatting and structure of the original text
+
+  - name: "content_moderation"
+    description: "Task definition for moderating content for safety"
+    content: |
+      Review the provided content for potential policy violations. Assess:
+      - Harmful, offensive, or inappropriate language
+      - Spam, misleading, or false information
+      - Personal information or privacy concerns  
+      - Copyright or intellectual property issues
+      - Age-appropriateness and community guidelines compliance
+      
+      Provide specific reasoning for any flagged content.
+
+  - name: "creative_writing"
+    description: "Task definition for creative writing and storytelling"
+    content: |
+      Create engaging, original creative content that:
+      - Develops compelling characters, settings, or concepts
+      - Uses vivid, descriptive language appropriate to the genre
+      - Maintains consistent tone and style throughout
+      - Incorporates requested themes, constraints, or elements
+      - Demonstrates creativity while staying coherent and readable
+
+  - name: "data_analysis"
+    description: "Task definition for analyzing and interpreting data"
+    content: |
+      Analyze the provided data to extract meaningful insights. Focus on:
+      - Identifying patterns, trends, and anomalies
+      - Statistical significance and confidence in findings
+      - Practical implications and actionable recommendations
+      - Potential limitations or biases in the data
+      - Clear visualization or summary of key findings

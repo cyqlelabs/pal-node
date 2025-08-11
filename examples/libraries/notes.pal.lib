@@ -1,0 +1,90 @@
+pal_version: "1.0"
+library_id: "com.example.notes.reminders"
+version: "1.0.0"
+description: "A collection of note components containing important reminders, warnings, and supplementary information."
+type: "note"
+
+components:
+  - name: "security_reminder"
+    description: "Important security considerations and reminders"
+    content: |
+      ## 🔒 Security Reminder
+      **Important:** Always validate and sanitize user input. Never trust client-side data validation alone. 
+      Implement proper authentication and authorization checks. Log security events for monitoring.
+
+  - name: "performance_warning"
+    description: "Performance considerations and optimization reminders"
+    content: |
+      ## ⚡ Performance Note
+      **Consider:** This operation may impact performance at scale. Monitor response times and consider 
+      implementing caching, pagination, or async processing for large datasets. Test with realistic data volumes.
+
+  - name: "api_versioning_note"
+    description: "API versioning and compatibility reminder"
+    content: |
+      ## 📋 API Versioning Note
+      **Remember:** Maintain backward compatibility when modifying existing APIs. Use semantic versioning 
+      for breaking changes. Deprecate old endpoints with sufficient notice before removal.
+
+  - name: "data_privacy_warning"
+    description: "Data privacy and compliance reminder"
+    content: |
+      ## 🛡️ Privacy Warning  
+      **Critical:** This component handles personal data. Ensure GDPR/CCPA compliance, implement data retention 
+      policies, provide user consent mechanisms, and encrypt sensitive information both in transit and at rest.
+
+  - name: "testing_reminder"
+    description: "Testing requirements and best practices"
+    content: |
+      ## 🧪 Testing Reminder
+      **Don't forget:** Write unit tests for core functionality, integration tests for API endpoints, 
+      and end-to-end tests for critical user flows. Aim for >80% code coverage and test edge cases.
+
+  - name: "accessibility_note"
+    description: "Accessibility requirements reminder"
+    content: |
+      ## ♿ Accessibility Note
+      **Ensure:** All interactive elements are keyboard accessible, images have alt text, 
+      color contrast meets WCAG standards, and screen readers can navigate the interface effectively.
+
+  - name: "error_handling_tip"
+    description: "Error handling best practices reminder"
+    content: |
+      ## 🚨 Error Handling Tip
+      **Best practice:** Implement graceful error handling with user-friendly messages. Log detailed errors 
+      for debugging but never expose sensitive system information to users. Provide actionable next steps.
+
+  - name: "documentation_reminder"
+    description: "Documentation requirements and standards"
+    content: |
+      ## 📝 Documentation Reminder
+      **Required:** Update API documentation, code comments, and user guides when making changes. 
+      Include examples, error scenarios, and migration instructions for breaking changes.
+
+  - name: "code_review_checklist"
+    description: "Code review checklist and quality standards"
+    content: |
+      ## ✅ Code Review Checklist
+      **Verify:** Code follows style guidelines, includes appropriate tests, handles errors gracefully, 
+      has clear variable names, includes necessary comments, and doesn't introduce security vulnerabilities.
+
+  - name: "deployment_caution"
+    description: "Deployment safety and rollback considerations"  
+    content: |
+      ## 🚀 Deployment Caution
+      **Before deploying:** Verify changes in staging environment, ensure rollback plan exists, 
+      coordinate with team on timing, monitor key metrics post-deployment, and have incident response ready.
+
+  - name: "third_party_dependency_warning"
+    description: "Third-party dependency management reminder"
+    content: |
+      ## 📦 Dependency Warning
+      **Monitor:** Keep third-party dependencies updated for security patches. Review licenses for compliance.
+      Consider supply chain security and have fallback plans for critical dependencies.
+
+  - name: "scalability_consideration"
+    description: "Scalability and growth planning reminder"
+    content: |
+      ## 📈 Scalability Note
+      **Plan ahead:** Design components to handle growth in users, data, and traffic. Consider database 
+      indexing, caching strategies, load balancing, and horizontal scaling patterns from the start.

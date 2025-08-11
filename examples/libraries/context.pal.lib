@@ -1,0 +1,101 @@
+pal_version: "1.0"
+library_id: "com.example.context.situational"
+version: "1.0.0"
+description: "A collection of contextual information components for different scenarios."
+type: "context"
+
+components:
+  - name: "customer_support"
+    description: "Context for customer support interactions"
+    content: |
+      ## Support Context
+      You are operating in a customer support environment where:
+      - Customers may be frustrated or experiencing urgent issues
+      - Response time and resolution quality directly impact satisfaction
+      - You have access to account information and service history
+      - Escalation procedures are available for complex issues
+      - Company policies and procedures must be followed consistently
+
+  - name: "enterprise_software"
+    description: "Context for enterprise software development"
+    content: |
+      ## Enterprise Development Context  
+      This is an enterprise software environment with:
+      - Multiple development teams and stakeholders
+      - Strict security, compliance, and audit requirements
+      - Legacy system integration constraints
+      - Formal change management and approval processes
+      - High availability and performance requirements
+      - Comprehensive testing and documentation standards
+
+  - name: "educational_content"
+    description: "Context for educational or training materials"
+    content: |
+      ## Educational Context
+      You are creating content for learning purposes where:
+      - Learners may have varying levels of prior knowledge
+      - Concepts should be explained clearly with examples
+      - Progressive difficulty and scaffolding are important
+      - Assessment and practice opportunities should be included
+      - Accessibility and inclusive design principles apply
+      - Learning objectives should be clearly defined
+
+  - name: "healthcare_compliance"
+    description: "Context for healthcare-related applications"
+    content: |
+      ## Healthcare Context
+      This application operates in a healthcare environment requiring:
+      - Strict HIPAA compliance and patient privacy protection  
+      - Clinical accuracy and evidence-based information
+      - Integration with electronic health record systems
+      - Audit trails and data governance requirements
+      - Healthcare professional workflow considerations
+      - Patient safety as the highest priority
+
+  - name: "financial_services"
+    description: "Context for financial services and fintech"
+    content: |
+      ## Financial Services Context
+      Operating in the financial sector requires:
+      - Regulatory compliance (SOX, PCI-DSS, banking regulations)
+      - Robust security and fraud prevention measures
+      - Real-time transaction processing capabilities
+      - Accurate financial calculations and reporting
+      - Customer financial data protection
+      - Risk management and audit trail requirements
+
+  - name: "startup_environment"
+    description: "Context for startup or rapid development scenarios"
+    content: |
+      ## Startup Context
+      This is a fast-paced startup environment characterized by:
+      - Limited resources requiring efficient solutions
+      - Rapid iteration and pivoting capabilities needed
+      - MVP (Minimum Viable Product) development approach
+      - Direct user feedback and market validation focus
+      - Flexible architecture to accommodate future changes
+      - Speed to market is often prioritized over perfection
+
+  - name: "api_development"
+    description: "Context for API design and development"
+    content: |
+      ## API Development Context
+      You are working on API development where:
+      - RESTful design principles and HTTP standards apply
+      - Backward compatibility and versioning are crucial
+      - Clear documentation for developers is essential
+      - Rate limiting, authentication, and security are required
+      - Error handling and status codes must be consistent
+      - Performance and scalability are key considerations
+
+  - name: "mobile_application"
+    description: "Context for mobile app development"
+    content: |
+      ## Mobile Application Context
+      This mobile app development requires consideration of:
+      - Platform-specific design guidelines (iOS/Android)
+      - Limited screen real estate and touch interfaces
+      - Battery life and performance optimization
+      - Offline functionality and data synchronization
+      - App store approval processes and guidelines
+      - Push notifications and background processing limitations

@@ -1,0 +1,67 @@
+pal_version: "1.0"
+library_id: "com.example.strategies.reasoning"
+version: "1.0.0"
+description: "A collection of reasoning strategies for structured thinking."
+type: "reasoning"
+
+components:
+  - name: "chain_of_thought"
+    description: "Step-by-step reasoning approach"
+    content: |
+      Think through this step by step:
+      1. First, understand what is being asked
+      2. Break down the problem into smaller parts
+      3. Work through each part systematically
+      4. Combine your findings to reach a conclusion
+      5. Double-check your reasoning before providing the final answer
+
+  - name: "pros_and_cons"
+    description: "Analyze advantages and disadvantages"
+    content: |
+      Analyze this by considering both sides:
+      
+      **Pros (Advantages):**
+      - List positive aspects
+      - Consider benefits and opportunities
+      
+      **Cons (Disadvantages):**  
+      - List negative aspects
+      - Consider risks and drawbacks
+      
+      Then weigh these factors to form a balanced conclusion.
+
+  - name: "first_principles"
+    description: "Reasoning from fundamental truths"
+    content: |
+      Apply first principles thinking:
+      1. Break down the problem to its fundamental elements
+      2. Question assumptions and identify what we know for certain
+      3. Reason up from these basic truths
+      4. Build understanding from the ground up
+      5. Avoid reasoning by analogy or convention
+
+  - name: "five_whys"
+    description: "Root cause analysis through repeated questioning"
+    content: |
+      Use the "Five Whys" technique to get to the root cause:
+      1. Ask "Why?" about the problem
+      2. For each answer, ask "Why?" again  
+      3. Continue this process at least 5 times
+      4. This will help uncover the underlying root cause
+      5. Address the root cause rather than just symptoms
+
+  - name: "scenario_analysis"
+    description: "Consider multiple potential outcomes"
+    content: |
+      Consider multiple scenarios:
+      
+      **Best Case Scenario:**
+      - What would the optimal outcome look like?
+      
+      **Worst Case Scenario:**
+      - What could go wrong?
+      
+      **Most Likely Scenario:**
+      - What is the most probable outcome?
+      
+      Plan for each scenario and identify key factors that determine which scenario occurs.

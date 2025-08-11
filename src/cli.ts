@@ -4,7 +4,7 @@ import { readFile, writeFile } from 'fs/promises';
 import { resolve } from 'path';
 import { Command } from 'commander';
 import { glob } from 'glob';
-import * as kleur from 'kleur';
+import kleur from 'kleur';
 import { PromptCompiler } from './core/compiler.js';
 import {
   PromptExecutor,
