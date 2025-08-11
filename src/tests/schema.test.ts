@@ -309,8 +309,16 @@ describe('Schema Validation', () => {
     };
 
     it('should accept all valid variable types', () => {
-      const types = ['string', 'integer', 'float', 'boolean', 'list', 'dict', 'any'];
-      
+      const types = [
+        'string',
+        'integer',
+        'float',
+        'boolean',
+        'list',
+        'dict',
+        'any',
+      ];
+
       for (const type of types) {
         const variable = { ...validVariable, type };
         // This should not throw

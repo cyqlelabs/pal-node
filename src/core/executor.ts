@@ -54,7 +54,7 @@ export class MockLLMClient implements LLMClient {
     this.lastModel = model;
 
     // Simulate some processing time
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     return {
       response: this.response,
@@ -278,7 +278,8 @@ export class PromptExecutor {
       return result;
     } catch (error) {
       const executionTime = Date.now() - startTime;
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
 
       // Create error result
       const errorResult: ExecutionResult = {

@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PromptCompiler } from '../core/compiler.js';
 import { Loader } from '../core/loader.js';
-import { 
-  PALCompilerError, 
-  PALMissingComponentError, 
-  PALMissingVariableError 
+import {
+  PALCompilerError,
+  PALMissingComponentError,
+  PALMissingVariableError,
 } from '../exceptions/core.js';
 import type { PromptAssembly, ComponentLibrary } from '../types/schema.js';
 
@@ -42,14 +42,17 @@ describe('PromptCompiler', () => {
     };
 
     it('should compile a basic prompt with variables', async () => {
-      const result = await compiler.compile(basicPromptAssembly, { name: 'World' });
-      
+      const result = await compiler.compile(basicPromptAssembly, {
+        name: 'World',
+      });
+
       expect(result).toBe('Hello World!');
     });
 
     it('should handle missing required variables', async () => {
-      await expect(compiler.compile(basicPromptAssembly, {}))
-        .rejects.toThrow(PALMissingVariableError);
+      await expect(compiler.compile(basicPromptAssembly, {})).rejects.toThrow(
+        PALMissingVariableError
+      );
     });
 
     it('should use default values for optional variables', async () => {
@@ -73,8 +76,10 @@ describe('PromptCompiler', () => {
         composition: ['{{ greeting }} {{ name }}!'],
       };
 
-      const result = await compiler.compile(promptWithDefault, { name: 'World' });
-      
+      const result = await compiler.compile(promptWithDefault, {
+        name: 'World',
+      });
+
       expect(result).toBe('Hello World!');
     });
 
@@ -84,11 +89,7 @@ describe('PromptCompiler', () => {
         imports: {
           traits: './traits.pal.lib',
         },
-        composition: [
-          '{{ traits.helpful }}',
-          '',
-          'Hello {{ name }}!',
-        ],
+        composition: ['{{ traits.helpful }}', '', 'Hello {{ name }}!'],
       };
 
       const traitsLibrary: ComponentLibrary = {
@@ -109,14 +110,16 @@ describe('PromptCompiler', () => {
       };
 
       // Mock the resolver's resolveDependencies method
-      vi.spyOn(compiler['resolver'], 'resolveDependencies')
-        .mockResolvedValue({ traits: traitsLibrary });
-      
-      vi.spyOn(compiler['resolver'], 'validateReferences')
-        .mockReturnValue([]);
+      vi.spyOn(compiler['resolver'], 'resolveDependencies').mockResolvedValue({
+        traits: traitsLibrary,
+      });
 
-      const result = await compiler.compile(promptWithImports, { name: 'World' });
-      
+      vi.spyOn(compiler['resolver'], 'validateReferences').mockReturnValue([]);
+
+      const result = await compiler.compile(promptWithImports, {
+        name: 'World',
+      });
+
       expect(result).toBe('You are a helpful assistant.\n\nHello World!');
     });
 
@@ -129,14 +132,17 @@ describe('PromptCompiler', () => {
         composition: ['{{ traits.nonexistent }}'],
       };
 
-      vi.spyOn(compiler['resolver'], 'resolveDependencies')
-        .mockResolvedValue({});
-      
-      vi.spyOn(compiler['resolver'], 'validateReferences')
-        .mockReturnValue(['Component nonexistent not found']);
+      vi.spyOn(compiler['resolver'], 'resolveDependencies').mockResolvedValue(
+        {}
+      );
 
-      await expect(compiler.compile(promptWithBadRef))
-        .rejects.toThrow(PALMissingComponentError);
+      vi.spyOn(compiler['resolver'], 'validateReferences').mockReturnValue([
+        'Component nonexistent not found',
+      ]);
+
+      await expect(compiler.compile(promptWithBadRef)).rejects.toThrow(
+        PALMissingComponentError
+      );
     });
 
     it('should handle type conversion for variables', async () => {
@@ -174,7 +180,7 @@ describe('PromptCompiler', () => {
         active: 'true',
         items: ['a', 'b', 'c'],
       });
-      
+
       expect(result).toContain('Count: 42');
       expect(result).toContain('Active: true');
       expect(result).toContain('Items: 3');
@@ -194,8 +200,9 @@ describe('PromptCompiler', () => {
         composition: ['Count: {{ count }}'],
       };
 
-      await expect(compiler.compile(promptWithTypes, { count: 'not-a-number' }))
-        .rejects.toThrow(PALCompilerError);
+      await expect(
+        compiler.compile(promptWithTypes, { count: 'not-a-number' })
+      ).rejects.toThrow(PALCompilerError);
     });
 
     it('should handle multi-line compositions', async () => {
@@ -237,7 +244,7 @@ describe('PromptCompiler', () => {
         items: ['item1', 'item2'],
         task: 'testing',
       });
-      
+
       expect(result).toContain('You are an assistant.');
       expect(result).toContain('- item1');
       expect(result).toContain('- item2');
@@ -247,17 +254,13 @@ describe('PromptCompiler', () => {
     it('should clean up excessive blank lines', async () => {
       const promptWithBlanks: PromptAssembly = {
         ...basicPromptAssembly,
-        composition: [
-          'Line 1',
-          '',
-          '',
-          '',
-          'Line 2',
-        ],
+        composition: ['Line 1', '', '', '', 'Line 2'],
       };
 
-      const result = await compiler.compile(promptWithBlanks, { name: 'World' });
-      
+      const result = await compiler.compile(promptWithBlanks, {
+        name: 'World',
+      });
+
       // Should reduce multiple blank lines to at most 2
       expect(result).not.toContain('\n\n\n\n');
       expect(result).toMatch(/Line 1\n\nLine 2/);
@@ -291,7 +294,7 @@ describe('PromptCompiler', () => {
       };
 
       const variables = compiler.analyzeTemplateVariables(promptAssembly);
-      
+
       expect(variables).toContain('mood');
       expect(variables).not.toContain('name'); // Defined variable
       expect(variables).not.toContain('traits.helpful'); // Component reference
@@ -307,19 +310,22 @@ describe('PromptCompiler', () => {
     it('should convert integer values', () => {
       expect(compiler['convertVariable']('42', 'integer')).toBe(42);
       expect(compiler['convertVariable'](42.0, 'integer')).toBe(42);
-      
-      expect(() => compiler['convertVariable'](true, 'integer'))
-        .toThrow('Boolean cannot be converted to integer');
-      expect(() => compiler['convertVariable']('not-a-number', 'integer'))
-        .toThrow();
+
+      expect(() => compiler['convertVariable'](true, 'integer')).toThrow(
+        'Boolean cannot be converted to integer'
+      );
+      expect(() =>
+        compiler['convertVariable']('not-a-number', 'integer')
+      ).toThrow();
     });
 
     it('should convert float values', () => {
       expect(compiler['convertVariable']('3.14', 'float')).toBe(3.14);
       expect(compiler['convertVariable'](42, 'float')).toBe(42.0);
-      
-      expect(() => compiler['convertVariable'](true, 'float'))
-        .toThrow('Boolean cannot be converted to float');
+
+      expect(() => compiler['convertVariable'](true, 'float')).toThrow(
+        'Boolean cannot be converted to float'
+      );
     });
 
     it('should convert boolean values', () => {
@@ -329,24 +335,27 @@ describe('PromptCompiler', () => {
       expect(compiler['convertVariable']('0', 'boolean')).toBe(false);
       expect(compiler['convertVariable'](1, 'boolean')).toBe(true);
       expect(compiler['convertVariable'](0, 'boolean')).toBe(false);
-      
-      expect(() => compiler['convertVariable']('invalid', 'boolean'))
-        .toThrow("Cannot convert string 'invalid' to boolean");
+
+      expect(() => compiler['convertVariable']('invalid', 'boolean')).toThrow(
+        "Cannot convert string 'invalid' to boolean"
+      );
     });
 
     it('should convert list values', () => {
       expect(compiler['convertVariable']([1, 2, 3], 'list')).toEqual([1, 2, 3]);
-      
-      expect(() => compiler['convertVariable']('not-an-array', 'list'))
-        .toThrow('Expected array, got string');
+
+      expect(() => compiler['convertVariable']('not-an-array', 'list')).toThrow(
+        'Expected array, got string'
+      );
     });
 
     it('should convert dict values', () => {
       const obj = { key: 'value' };
       expect(compiler['convertVariable'](obj, 'dict')).toEqual(obj);
-      
-      expect(() => compiler['convertVariable']('not-an-object', 'dict'))
-        .toThrow('Expected object, got string');
+
+      expect(() =>
+        compiler['convertVariable']('not-an-object', 'dict')
+      ).toThrow('Expected object, got string');
     });
 
     it('should pass through any values', () => {

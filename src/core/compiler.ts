@@ -44,7 +44,9 @@ class ComponentTemplateLoader extends nunjucks.FileSystemLoader {
     }
 
     const library = this.resolvedLibraries[alias];
-    const component = library.components.find((c: any) => c.name === componentName);
+    const component = library.components.find(
+      (c: any) => c.name === componentName
+    );
 
     if (!component) {
       const available = library.components.map((c: any) => c.name);
@@ -128,7 +130,10 @@ export class PromptCompiler {
     const env = this.createNunjucksEnvironment(resolvedLibraries);
 
     // Build context for templating
-    const context = this.buildTemplateContext(resolvedLibraries, typedVariables);
+    const context = this.buildTemplateContext(
+      resolvedLibraries,
+      typedVariables
+    );
 
     // Join composition items and compile as a single template
     const fullComposition = promptAssembly.composition.join('\n');
@@ -141,9 +146,10 @@ export class PromptCompiler {
         throw new PALCompilerError(
           `Template error in composition: ${error.message}`,
           {
-            composition: fullComposition.length > 500 
-              ? fullComposition.substring(0, 500) + '...'
-              : fullComposition,
+            composition:
+              fullComposition.length > 500
+                ? fullComposition.substring(0, 500) + '...'
+                : fullComposition,
             error: error.message,
             promptId: promptAssembly.id,
           }
@@ -183,7 +189,7 @@ export class PromptCompiler {
     variables: Record<string, unknown>
   ): Record<string, unknown> {
     const typedVars: Record<string, unknown> = {};
-    const varDefs = new Map(promptAssembly.variables.map(v => [v.name, v]));
+    const varDefs = new Map(promptAssembly.variables.map((v) => [v.name, v]));
 
     // Process provided variables
     for (const [name, value] of Object.entries(variables)) {
@@ -338,7 +344,7 @@ export class PromptCompiler {
     resolvedLibraries: Record<string, ComponentLibrary>
   ): Environment {
     const loader = new ComponentTemplateLoader(resolvedLibraries);
-    
+
     const env = new Environment(loader, {
       autoescape: false,
       throwOnUndefined: true,
@@ -349,9 +355,10 @@ export class PromptCompiler {
     // Add custom filters
     env.addFilter('upper', (str: string) => str.toUpperCase());
     env.addFilter('lower', (str: string) => str.toLowerCase());
-    env.addFilter('title', (str: string) => 
-      str.replace(/\w\S*/g, txt => 
-        txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase()
+    env.addFilter('title', (str: string) =>
+      str.replace(
+        /\w\S*/g,
+        (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase()
       )
     );
 
@@ -385,7 +392,7 @@ export class PromptCompiler {
   private cleanCompiledPrompt(prompt: string): string {
     // Remove excessive blank lines (more than 2 consecutive)
     const cleaned = prompt.replace(/\n\s*\n\s*\n+/g, '\n\n');
-    
+
     // Strip leading and trailing whitespace
     return cleaned.trim();
   }
@@ -396,31 +403,31 @@ export class PromptCompiler {
   analyzeTemplateVariables(promptAssembly: PromptAssembly): Set<string> {
     const variables = new Set<string>();
     const fullComposition = promptAssembly.composition.join('\n');
-    
+
     // Simple regex to find Nunjucks variables
     const variableRegex = /\{\{\s*([a-zA-Z_][a-zA-Z0-9_.]*)\s*\}\}/g;
     let match;
 
     const importAliases = new Set(Object.keys(promptAssembly.imports));
-    const definedVars = new Set(promptAssembly.variables.map(v => v.name));
+    const definedVars = new Set(promptAssembly.variables.map((v) => v.name));
 
     while ((match = variableRegex.exec(fullComposition)) !== null) {
       const variable = match[1];
-      
+
       if (!variable) {
         continue;
       }
-      
+
       if (importAliases.has(variable)) {
         // Skip import aliases
         continue;
       }
-      
+
       if (definedVars.has(variable)) {
         // Skip defined variables
         continue;
       }
-      
+
       if (variable.includes('.')) {
         // This is a dotted reference like "alias.component"
         const alias = variable.split('.')[0];

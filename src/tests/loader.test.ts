@@ -58,7 +58,7 @@ variables:
       mockReadFile.mockResolvedValue(yamlContent);
 
       const result = await loader.loadPromptAssembly('/test/prompt.pal');
-      
+
       expect(result).toEqual(validPromptAssembly);
       expect(mockReadFile).toHaveBeenCalledWith('/test/prompt.pal', 'utf-8');
     });
@@ -83,8 +83,10 @@ variables:
         text: () => Promise.resolve(yamlContent),
       } as Response);
 
-      const result = await loader.loadPromptAssembly('https://example.com/prompt.pal');
-      
+      const result = await loader.loadPromptAssembly(
+        'https://example.com/prompt.pal'
+      );
+
       expect(result).toEqual(validPromptAssembly);
       expect(mockFetch).toHaveBeenCalledWith(
         'https://example.com/prompt.pal',
@@ -93,12 +95,15 @@ variables:
     });
 
     it('should throw PALLoadError for file not found', async () => {
-      const error = new Error('ENOENT: no such file or directory') as NodeJS.ErrnoException;
+      const error = new Error(
+        'ENOENT: no such file or directory'
+      ) as NodeJS.ErrnoException;
       error.code = 'ENOENT';
       mockReadFile.mockRejectedValue(error);
 
-      await expect(loader.loadPromptAssembly('/nonexistent/file.pal'))
-        .rejects.toThrow(PALLoadError);
+      await expect(
+        loader.loadPromptAssembly('/nonexistent/file.pal')
+      ).rejects.toThrow(PALLoadError);
     });
 
     it('should throw PALLoadError for HTTP error', async () => {
@@ -108,15 +113,17 @@ variables:
         statusText: 'Not Found',
       } as Response);
 
-      await expect(loader.loadPromptAssembly('https://example.com/404.pal'))
-        .rejects.toThrow(PALLoadError);
+      await expect(
+        loader.loadPromptAssembly('https://example.com/404.pal')
+      ).rejects.toThrow(PALLoadError);
     });
 
     it('should throw PALValidationError for invalid YAML', async () => {
       mockReadFile.mockResolvedValue('invalid: yaml: content: [');
 
-      await expect(loader.loadPromptAssembly('/test/invalid.pal'))
-        .rejects.toThrow(PALValidationError);
+      await expect(
+        loader.loadPromptAssembly('/test/invalid.pal')
+      ).rejects.toThrow(PALValidationError);
     });
 
     it('should throw PALValidationError for invalid schema', async () => {
@@ -128,8 +135,9 @@ id: "test-prompt"
 
       mockReadFile.mockResolvedValue(invalidYaml);
 
-      await expect(loader.loadPromptAssembly('/test/invalid.pal'))
-        .rejects.toThrow(PALValidationError);
+      await expect(
+        loader.loadPromptAssembly('/test/invalid.pal')
+      ).rejects.toThrow(PALValidationError);
     });
   });
 
@@ -167,7 +175,7 @@ components:
       mockReadFile.mockResolvedValue(yamlContent);
 
       const result = await loader.loadComponentLibrary('/test/library.pal.lib');
-      
+
       expect(result).toEqual(validLibrary);
     });
 
@@ -189,8 +197,9 @@ components:
 
       mockReadFile.mockResolvedValue(invalidYaml);
 
-      await expect(loader.loadComponentLibrary('/test/invalid.pal.lib'))
-        .rejects.toThrow(PALValidationError);
+      await expect(
+        loader.loadComponentLibrary('/test/invalid.pal.lib')
+      ).rejects.toThrow(PALValidationError);
     });
   });
 
@@ -237,7 +246,7 @@ test_cases:
       mockReadFile.mockResolvedValue(yamlContent);
 
       const result = await loader.loadEvaluationSuite('/test/eval.yaml');
-      
+
       expect(result).toEqual(validSuite);
     });
   });
@@ -252,7 +261,7 @@ description: "Test"
 composition:
   - "Hello"
       `;
-      
+
       mockFetch.mockResolvedValue({
         ok: true,
         text: () => Promise.resolve(yamlContent),
@@ -271,13 +280,14 @@ composition:
 
     it('should handle request timeout', async () => {
       const loader = new Loader(100); // 100ms timeout
-      
+
       mockFetch.mockImplementation(
-        () => new Promise(resolve => setTimeout(resolve, 200))
+        () => new Promise((resolve) => setTimeout(resolve, 200))
       );
 
-      await expect(loader.loadPromptAssembly('https://slow.example.com/test.pal'))
-        .rejects.toThrow(PALLoadError);
+      await expect(
+        loader.loadPromptAssembly('https://slow.example.com/test.pal')
+      ).rejects.toThrow(PALLoadError);
     }, 1000);
   });
 });

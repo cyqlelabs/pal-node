@@ -3,10 +3,7 @@ import {
   PALCircularDependencyError,
   PALResolverError,
 } from '../exceptions/core.js';
-import {
-  ComponentLibrary,
-  PromptAssembly,
-} from '../types/schema.js';
+import { ComponentLibrary, PromptAssembly } from '../types/schema.js';
 import { Loader } from './loader.js';
 
 /**
@@ -78,16 +75,17 @@ export class Resolver {
     const composition = promptAssembly.composition.join('\n');
 
     // Extract component references (alias.component format)
-    const componentRegex = /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*\.[a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g;
+    const componentRegex =
+      /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*\.[a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g;
     let match;
 
     while ((match = componentRegex.exec(composition)) !== null) {
       const reference = match[1];
-      
+
       if (!reference) {
         continue;
       }
-      
+
       const [alias, componentName] = reference.split('.');
 
       if (!alias || !resolvedLibraries[alias]) {
@@ -96,7 +94,9 @@ export class Resolver {
       }
 
       const library = resolvedLibraries[alias];
-      const component = library.components.find((c: any) => c.name === componentName);
+      const component = library.components.find(
+        (c: any) => c.name === componentName
+      );
 
       if (!component) {
         const available = library.components.map((c: any) => c.name);
@@ -142,16 +142,16 @@ export class Resolver {
       } else if (path.endsWith('.pal') || path.endsWith('.yml')) {
         // Handle nested prompt assemblies (recursive imports)
         const nestedAssembly = await this.loader.loadPromptAssembly(path);
-        
+
         // Resolve nested dependencies
         const nestedResolved = await this.resolveDependencies(
-          nestedAssembly, 
+          nestedAssembly,
           dirname(path)
         );
-        
+
         // Merge nested dependencies into current resolution
         Object.assign(resolved, nestedResolved);
-        
+
         // Create a synthetic library from the prompt assembly
         library = this.createLibraryFromAssembly(nestedAssembly);
       } else {
@@ -192,7 +192,9 @@ export class Resolver {
   /**
    * Create a synthetic library from a prompt assembly (for nested imports)
    */
-  private createLibraryFromAssembly(assembly: PromptAssembly): ComponentLibrary {
+  private createLibraryFromAssembly(
+    assembly: PromptAssembly
+  ): ComponentLibrary {
     return {
       pal_version: '1.0',
       library_id: assembly.id,

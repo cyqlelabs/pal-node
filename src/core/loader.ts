@@ -120,10 +120,13 @@ export class Loader {
             path,
           });
         }
-        throw new PALLoadError(`Failed to read file ${path}: ${error.message}`, {
-          path,
-          error: error.message,
-        });
+        throw new PALLoadError(
+          `Failed to read file ${path}: ${error.message}`,
+          {
+            path,
+            error: error.message,
+          }
+        );
       }
       throw error;
     }
@@ -166,10 +169,13 @@ export class Loader {
             timeout: this.timeout,
           });
         }
-        throw new PALLoadError(`Network error loading ${url}: ${error.message}`, {
-          url,
-          error: error.message,
-        });
+        throw new PALLoadError(
+          `Network error loading ${url}: ${error.message}`,
+          {
+            url,
+            error: error.message,
+          }
+        );
       }
       throw error;
     }
