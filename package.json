@@ -1,0 +1,82 @@
+{
+  "name": "pal-framework",
+  "version": "0.0.1",
+  "description": "Prompt Assembly Language - A framework for managing LLM prompts as versioned, composable software artifacts",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "bin": {
+    "pal": "dist/cli.js"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/cli.ts",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage --run",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format": "prettier --write src/**/*.ts",
+    "format:check": "prettier --check src/**/*.ts",
+    "type-check": "tsc --noEmit",
+    "clean": "rimraf dist",
+    "prepack": "npm run build"
+  },
+  "keywords": [
+    "prompt",
+    "llm",
+    "ai",
+    "template",
+    "assembly",
+    "framework",
+    "openai",
+    "anthropic",
+    "typescript"
+  ],
+  "author": {
+    "name": "Nicolas Iglesias",
+    "email": "nfiglesias@gmail.com"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "nunjucks": "^3.2.4",
+    "yaml": "^2.5.1",
+    "zod": "^3.23.8",
+    "openai": "^4.68.4",
+    "@anthropic-ai/sdk": "^0.29.0",
+    "kleur": "^4.1.5",
+    "glob": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.8.6",
+    "@types/nunjucks": "^3.2.6",
+    "@typescript-eslint/eslint-plugin": "^8.12.2",
+    "@typescript-eslint/parser": "^8.12.2",
+    "@vitest/coverage-v8": "^2.1.4",
+    "@vitest/ui": "^2.1.4",
+    "eslint": "^9.14.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "prettier": "^3.3.3",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  }
+}
