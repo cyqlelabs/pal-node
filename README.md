@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![CI](https://github.com/cyqlelabs/pal-node/workflows/CI/badge.svg)](https://github.com/cyqlelabs/pal-node/actions/workflows/ci.yml)
 
-PAL (Prompt Assembly Language) is a JavaScript/TypeScript framework for managing LLM prompts as versioned, composable software artifacts. It treats prompt engineering with the same rigor as software engineering, focusing on modularity, versioning, and testability.
+PAL (Prompt Assembly Language) is a framework for managing LLM prompts as versioned, composable software artifacts. It treats prompt engineering with the same rigor as software engineering, focusing on modularity, versioning, and testability.
 
 This is the NodeJS port of the [Python version of PAL](https://github.com/cyqlelabs/pal).
 
