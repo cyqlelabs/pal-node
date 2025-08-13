@@ -58,15 +58,15 @@ For a detailed guide, [read this](https://prompt-assembly-language-pal.readthedo
 
 ```yaml
 # libraries/traits.pal.lib
-pal_version: "1.0"
-library_id: "com.example.traits"
-version: "1.0.0"
-description: "Behavioral traits for AI agents"
-type: "trait"
+pal_version: '1.0'
+library_id: 'com.example.traits'
+version: '1.0.0'
+description: 'Behavioral traits for AI agents'
+type: 'trait'
 
 components:
-  - name: "helpful_assistant"
-    description: "A helpful and polite assistant"
+  - name: 'helpful_assistant'
+    description: 'A helpful and polite assistant'
     content: |
       You are a helpful, harmless, and honest AI assistant. You provide
       accurate information while being respectful and considerate.
@@ -78,34 +78,34 @@ For a detailed guide, [read this](https://prompt-assembly-language-pal.readthedo
 
 ```yaml
 # prompts/classify_intent.pal
-pal_version: "1.0"
-id: "classify-user-intent"
-version: "1.0.0"
-description: "Classifies user queries into intent categories"
+pal_version: '1.0'
+id: 'classify-user-intent'
+version: '1.0.0'
+description: 'Classifies user queries into intent categories'
 
 imports:
-  traits: "./libraries/traits.pal.lib"
+  traits: './libraries/traits.pal.lib'
 
 variables:
-  - name: "user_query"
-    type: "string"
+  - name: 'user_query'
+    type: 'string'
     description: "The user's input query"
-  - name: "available_intents"
-    type: "list"
-    description: "List of available intent categories"
+  - name: 'available_intents'
+    type: 'list'
+    description: 'List of available intent categories'
 
 composition:
-  - "{{ traits.helpful_assistant }}"
-  - ""
-  - "## Task"
-  - "Classify this user query into one of the available intents:"
-  - ""
-  - "**Available Intents:**"
-  - "{% for intent in available_intents %}"
-  - "- {{ intent.name }}: {{ intent.description }}"
-  - "{% endfor %}"
-  - ""
-  - "**User Query:** {{ user_query }}"
+  - '{{ traits.helpful_assistant }}'
+  - ''
+  - '## Task'
+  - 'Classify this user query into one of the available intents:'
+  - ''
+  - '**Available Intents:**'
+  - '{% for intent in available_intents %}'
+  - '- {{ intent.name }}: {{ intent.description }}'
+  - '{% endfor %}'
+  - ''
+  - '**User Query:** {{ user_query }}'
 ```
 
 ### 3. Use the CLI
@@ -132,21 +132,21 @@ import { PromptCompiler, PromptExecutor, MockLLMClient } from 'pal-framework';
 async function main() {
   // Set up components
   const compiler = new PromptCompiler();
-  const llmClient = new MockLLMClient("Mock response");
+  const llmClient = new MockLLMClient('Mock response');
   const executor = new PromptExecutor(llmClient);
 
   // Compile prompt
   const variables = {
     user_query: "What's the weather?",
-    available_intents: [{"name": "search", "description": "Search for info"}]
+    available_intents: [{ name: 'search', description: 'Search for info' }],
   };
 
   const compiledPrompt = await compiler.compileFromFile(
-    "prompts/classify_intent.pal",
+    'prompts/classify_intent.pal',
     variables
   );
 
-  console.log("Compiled Prompt:", compiledPrompt);
+  console.log('Compiled Prompt:', compiledPrompt);
 }
 
 main().catch(console.error);
@@ -158,20 +158,20 @@ Create test suites to validate your prompts:
 
 ```yaml
 # evaluation/classify_intent.eval.yaml
-pal_version: "1.0"
-prompt_id: "classify-user-intent"
-target_version: "1.0.0"
+pal_version: '1.0'
+prompt_id: 'classify-user-intent'
+target_version: '1.0.0'
 
 test_cases:
-  - name: "navigation_test"
+  - name: 'navigation_test'
     variables:
-      user_query: "Go to google.com"
-      available_intents: [{ "name": "navigate", "description": "Visit URL" }]
+      user_query: 'Go to google.com'
+      available_intents: [{ 'name': 'navigate', 'description': 'Visit URL' }]
     assertions:
-      - type: "json_valid"
-      - type: "contains"
+      - type: 'json_valid'
+      - type: 'contains'
         config:
-          text: "navigate"
+          text: 'navigate'
 ```
 
 ## 🏗️ Architecture
@@ -227,4 +227,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [ ] **PAL Registry**: Centralized repository for sharing components
 - [ ] **Visual Builder**: Drag-and-drop prompt composition interface
 - [ ] **IDE Extensions**: VS Code and other editor integrations
-
