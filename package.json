@@ -1,6 +1,6 @@
 {
   "name": "pal-framework",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "description": "Prompt Assembly Language - A framework for managing LLM prompts as versioned, composable software artifacts",
   "type": "module",
   "main": "dist/index.js",
