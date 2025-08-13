@@ -6,7 +6,11 @@ import {
   PALMissingComponentError,
   PALMissingVariableError,
 } from '../exceptions/core.js';
-import type { PromptAssembly, ComponentLibrary } from '../types/schema.js';
+import type {
+  PromptAssembly,
+  ComponentLibrary,
+  VariableTypeValue,
+} from '../types/schema.js';
 
 // Mock loader
 vi.mock('../core/loader.js');
@@ -14,7 +18,7 @@ const MockedLoader = vi.mocked(Loader, true);
 
 describe('PromptCompiler', () => {
   let compiler: PromptCompiler;
-  let mockLoader: any;
+  let mockLoader: vi.Mocked<Loader>;
 
   beforeEach(() => {
     mockLoader = new MockedLoader();
@@ -267,6 +271,165 @@ describe('PromptCompiler', () => {
     });
   });
 
+  describe('compileFromFile', () => {
+    it('should compile a prompt assembly from file', async () => {
+      const mockPromptAssembly: PromptAssembly = {
+        pal_version: '1.0',
+        id: 'test-prompt',
+        version: '1.0.0',
+        description: 'Test prompt',
+        imports: {},
+        variables: [
+          {
+            name: 'name',
+            type: 'string',
+            description: 'Name to greet',
+            required: true,
+          },
+        ],
+        composition: ['Hello {{ name }}!'],
+        metadata: {},
+      };
+
+      mockLoader.loadPromptAssembly.mockResolvedValue(mockPromptAssembly);
+
+      const result = await compiler.compileFromFile('/test/prompt.pal', {
+        name: 'World',
+      });
+
+      expect(result).toBe('Hello World!');
+      expect(mockLoader.loadPromptAssembly).toHaveBeenCalledWith(
+        '/test/prompt.pal'
+      );
+    });
+  });
+
+  describe('template error handling', () => {
+    it('should handle template errors in composition', async () => {
+      const promptWithError: PromptAssembly = {
+        pal_version: '1.0',
+        id: 'test-prompt',
+        version: '1.0.0',
+        description: 'Test prompt',
+        imports: {},
+        variables: [],
+        composition: ['{% for %}'], // Invalid template syntax
+        metadata: {},
+      };
+
+      await expect(compiler.compile(promptWithError)).rejects.toThrow(
+        PALCompilerError
+      );
+    });
+
+    it('should truncate long compositions in error messages', async () => {
+      const longComposition = 'a'.repeat(600);
+      const promptWithError: PromptAssembly = {
+        pal_version: '1.0',
+        id: 'test-prompt',
+        version: '1.0.0',
+        description: 'Test prompt',
+        imports: {},
+        variables: [],
+        composition: [`{% for ${longComposition} %}`], // Invalid template syntax with long content
+        metadata: {},
+      };
+
+      try {
+        await compiler.compile(promptWithError);
+      } catch (error) {
+        expect(error).toBeInstanceOf(PALCompilerError);
+        if (error instanceof PALCompilerError) {
+          expect(error.context?.composition).toContain('...');
+        }
+      }
+    });
+
+    it('should re-throw non-Error objects', async () => {
+      const promptAssembly: PromptAssembly = {
+        pal_version: '1.0',
+        id: 'test-prompt',
+        version: '1.0.0',
+        description: 'Test prompt',
+        imports: {},
+        variables: [],
+        composition: ['Hello'],
+        metadata: {},
+      };
+
+      // Mock nunjucks to throw a non-Error object
+      const mockEnv = {
+        renderString: vi.fn().mockImplementation(() => {
+          throw 'string error'; // Non-Error object
+        }),
+        addGlobal: vi.fn(),
+      };
+
+      vi.spyOn(
+        compiler as PromptCompiler & {
+          createNunjucksEnvironment: () => unknown;
+        },
+        'createNunjucksEnvironment'
+      ).mockReturnValue(mockEnv);
+
+      await expect(compiler.compile(promptAssembly)).rejects.toBe(
+        'string error'
+      );
+    });
+  });
+
+  describe('component template integration', () => {
+    it('should handle template compilation with imported components', async () => {
+      const promptWithImports: PromptAssembly = {
+        pal_version: '1.0',
+        id: 'test-prompt',
+        version: '1.0.0',
+        description: 'Test prompt',
+        imports: {
+          traits: './traits.pal.lib',
+        },
+        variables: [
+          {
+            name: 'name',
+            type: 'string',
+            description: 'Name to greet',
+            required: true,
+          },
+        ],
+        composition: ['{{ traits.helpful }}', '', 'Hello {{ name }}!'],
+        metadata: {},
+      };
+
+      const traitsLibrary: ComponentLibrary = {
+        pal_version: '1.0',
+        library_id: 'com.example.traits',
+        version: '1.0.0',
+        description: 'Traits library',
+        type: 'trait',
+        components: [
+          {
+            name: 'helpful',
+            description: 'Helpful trait',
+            content: 'You are a helpful assistant.',
+            metadata: {},
+          },
+        ],
+        metadata: {},
+      };
+
+      vi.spyOn(compiler['resolver'], 'resolveDependencies').mockResolvedValue({
+        traits: traitsLibrary,
+      });
+      vi.spyOn(compiler['resolver'], 'validateReferences').mockReturnValue([]);
+
+      const result = await compiler.compile(promptWithImports, {
+        name: 'World',
+      });
+
+      expect(result).toBe('You are a helpful assistant.\n\nHello World!');
+    });
+  });
+
   describe('analyzeTemplateVariables', () => {
     it('should identify template variables in composition', () => {
       const promptAssembly: PromptAssembly = {
@@ -298,6 +461,190 @@ describe('PromptCompiler', () => {
       expect(variables).toContain('mood');
       expect(variables).not.toContain('name'); // Defined variable
       expect(variables).not.toContain('traits.helpful'); // Component reference
+    });
+
+    it('should handle dotted references with unknown aliases', () => {
+      const promptAssembly: PromptAssembly = {
+        pal_version: '1.0',
+        id: 'test',
+        version: '1.0.0',
+        description: 'Test',
+        imports: {},
+        variables: [],
+        composition: [
+          '{{ unknown.component }}', // Unknown alias should be detected
+          '{{ traits.helpful }}', // Also unknown alias
+        ],
+        metadata: {},
+      };
+
+      const variables = compiler.analyzeTemplateVariables(promptAssembly);
+
+      expect(variables).toContain('unknown.component');
+      expect(variables).toContain('traits.helpful');
+    });
+
+    it('should handle empty variable matches', () => {
+      const promptAssembly: PromptAssembly = {
+        pal_version: '1.0',
+        id: 'test',
+        version: '1.0.0',
+        description: 'Test',
+        imports: {},
+        variables: [],
+        composition: [
+          '{{  }}', // Empty variable reference
+          '{{ }}', // Empty variable reference
+          'Hello world', // No variables
+        ],
+        metadata: {},
+      };
+
+      const variables = compiler.analyzeTemplateVariables(promptAssembly);
+
+      expect(variables.size).toBe(0);
+    });
+
+    it('should skip import aliases in template analysis', () => {
+      const promptAssembly: PromptAssembly = {
+        pal_version: '1.0',
+        id: 'test',
+        version: '1.0.0',
+        description: 'Test',
+        imports: {
+          traits: './traits.pal.lib',
+          utils: './utils.pal.lib',
+        },
+        variables: [
+          {
+            name: 'defined_var',
+            type: 'string',
+            description: 'Defined variable',
+            required: true,
+          },
+        ],
+        composition: [
+          '{{ traits }}', // This should be skipped (import alias)
+          '{{ utils }}', // This should be skipped (import alias)
+          '{{ defined_var }}', // This should be skipped (defined variable)
+          '{{ undefined_var }}', // This should be included
+        ],
+        metadata: {},
+      };
+
+      const variables = compiler.analyzeTemplateVariables(promptAssembly);
+
+      expect(variables.size).toBe(1);
+      expect(variables).toContain('undefined_var');
+      expect(variables).not.toContain('traits');
+      expect(variables).not.toContain('utils');
+      expect(variables).not.toContain('defined_var');
+    });
+  });
+
+  describe('component loading edge cases', () => {
+    it('should handle template errors with component references', async () => {
+      const promptWithBadComponent: PromptAssembly = {
+        pal_version: '1.0',
+        id: 'test-bad-component',
+        version: '1.0.0',
+        description: 'Test bad component',
+        imports: {},
+        variables: [],
+        composition: [
+          '{% include "invalid_reference" %}', // Invalid reference format
+        ],
+        metadata: {},
+      };
+
+      vi.spyOn(compiler['resolver'], 'resolveDependencies').mockResolvedValue(
+        {}
+      );
+      vi.spyOn(compiler['resolver'], 'validateReferences').mockReturnValue([]);
+
+      await expect(compiler.compile(promptWithBadComponent)).rejects.toThrow(
+        PALCompilerError
+      );
+    });
+
+    it('should handle template errors with missing aliases', async () => {
+      const promptWithMissingAlias: PromptAssembly = {
+        pal_version: '1.0',
+        id: 'test-missing-alias',
+        version: '1.0.0',
+        description: 'Test missing alias',
+        imports: {},
+        variables: [],
+        composition: [
+          '{% include "unknown.component" %}', // Unknown alias
+        ],
+        metadata: {},
+      };
+
+      vi.spyOn(compiler['resolver'], 'resolveDependencies').mockResolvedValue(
+        {}
+      );
+      vi.spyOn(compiler['resolver'], 'validateReferences').mockReturnValue([]);
+
+      await expect(compiler.compile(promptWithMissingAlias)).rejects.toThrow(
+        PALCompilerError
+      );
+    });
+  });
+
+  describe('template filters', () => {
+    it('should apply custom filters correctly', async () => {
+      const promptAssembly: PromptAssembly = {
+        pal_version: '1.0',
+        id: 'test-filters',
+        version: '1.0.0',
+        description: 'Test filters',
+        imports: {},
+        variables: [
+          {
+            name: 'text',
+            type: 'string',
+            description: 'Text to transform',
+            required: true,
+          },
+        ],
+        composition: [
+          'Upper: {{ text | upper }}',
+          'Lower: {{ text | lower }}',
+          'Title: {{ text | title }}',
+        ],
+        metadata: {},
+      };
+
+      const result = await compiler.compile(promptAssembly, {
+        text: 'hello WORLD',
+      });
+
+      expect(result).toContain('Upper: HELLO WORLD');
+      expect(result).toContain('Lower: hello world');
+      expect(result).toContain('Title: Hello World');
+    });
+  });
+
+  describe('unknown variable types', () => {
+    it('should throw error for unknown variable type', () => {
+      expect(() =>
+        compiler['convertVariable'](
+          'value',
+          'unknown_type' as VariableTypeValue
+        )
+      ).toThrow('Unknown variable type: unknown_type');
+    });
+  });
+
+  describe('boolean conversion edge cases', () => {
+    it('should handle additional boolean string values', () => {
+      expect(compiler['convertVariable']('yes', 'boolean')).toBe(true);
+      expect(compiler['convertVariable']('no', 'boolean')).toBe(false);
+      expect(compiler['convertVariable']('on', 'boolean')).toBe(true);
+      expect(compiler['convertVariable']('off', 'boolean')).toBe(false);
+      expect(compiler['convertVariable']('YES', 'boolean')).toBe(true);
+      expect(compiler['convertVariable']('NO', 'boolean')).toBe(false);
     });
   });
 
@@ -361,6 +708,152 @@ describe('PromptCompiler', () => {
     it('should pass through any values', () => {
       const value = { complex: 'object' };
       expect(compiler['convertVariable'](value, 'any')).toBe(value);
+    });
+  });
+
+  describe('default value handling', () => {
+    it('should use default values for non-required variables', async () => {
+      const promptWithDefaults: PromptAssembly = {
+        pal_version: '1.0',
+        id: 'test-defaults',
+        version: '1.0.0',
+        description: 'Test defaults',
+        imports: {},
+        variables: [
+          {
+            name: 'optional_string',
+            type: 'string',
+            description: 'Optional string',
+            required: false,
+          },
+          {
+            name: 'optional_list',
+            type: 'list',
+            description: 'Optional list',
+            required: false,
+          },
+          {
+            name: 'optional_dict',
+            type: 'dict',
+            description: 'Optional dict',
+            required: false,
+          },
+          {
+            name: 'optional_boolean',
+            type: 'boolean',
+            description: 'Optional boolean',
+            required: false,
+          },
+          {
+            name: 'optional_integer',
+            type: 'integer',
+            description: 'Optional integer',
+            required: false,
+          },
+          {
+            name: 'optional_float',
+            type: 'float',
+            description: 'Optional float',
+            required: false,
+          },
+          {
+            name: 'optional_any',
+            type: 'any',
+            description: 'Optional any',
+            required: false,
+          },
+        ],
+        composition: [
+          'String: {{ optional_string }}',
+          'List length: {{ optional_list | length }}',
+          'Boolean: {{ optional_boolean }}',
+          'Integer: {{ optional_integer }}',
+          'Float: {{ optional_float }}',
+          'Any: {{ optional_any if optional_any is not null else "null" }}',
+        ],
+        metadata: {},
+      };
+
+      const result = await compiler.compile(promptWithDefaults, {});
+
+      expect(result).toContain('String: ');
+      expect(result).toContain('List length: 0');
+      expect(result).toContain('Boolean: false');
+      expect(result).toContain('Integer: 0');
+      expect(result).toContain('Float: 0');
+      expect(result).toContain('Any: null');
+    });
+
+    it('should prefer explicit default values over type defaults', async () => {
+      const promptWithExplicitDefaults: PromptAssembly = {
+        pal_version: '1.0',
+        id: 'test-explicit-defaults',
+        version: '1.0.0',
+        description: 'Test explicit defaults',
+        imports: {},
+        variables: [
+          {
+            name: 'greeting',
+            type: 'string',
+            description: 'Greeting',
+            required: false,
+            default: 'Custom greeting',
+          },
+          {
+            name: 'count',
+            type: 'integer',
+            description: 'Count',
+            required: false,
+            default: 42,
+          },
+        ],
+        composition: ['{{ greeting }}: {{ count }}'],
+        metadata: {},
+      };
+
+      const result = await compiler.compile(promptWithExplicitDefaults, {});
+
+      expect(result).toBe('Custom greeting: 42');
+    });
+  });
+
+  describe('compiler constructor', () => {
+    it('should use provided loader', () => {
+      const customLoader = new MockedLoader();
+      const customCompiler = new PromptCompiler(customLoader);
+
+      expect(customCompiler['loader']).toBe(customLoader);
+    });
+
+    it('should create default loader if none provided', () => {
+      const defaultCompiler = new PromptCompiler();
+
+      expect(defaultCompiler['loader']).toBeDefined();
+    });
+  });
+
+  describe('error context in compilation errors', () => {
+    it('should include prompt ID in error context', async () => {
+      const promptWithError: PromptAssembly = {
+        pal_version: '1.0',
+        id: 'error-prompt-id',
+        version: '1.0.0',
+        description: 'Error prompt',
+        imports: {},
+        variables: [],
+        composition: ['{% invalid_syntax %}'],
+        metadata: {},
+      };
+
+      try {
+        await compiler.compile(promptWithError);
+        expect.fail('Expected compilation to throw error');
+      } catch (error) {
+        expect(error).toBeInstanceOf(PALCompilerError);
+        if (error instanceof PALCompilerError) {
+          expect(error.context?.promptId).toBe('error-prompt-id');
+        }
+      }
     });
   });
 });

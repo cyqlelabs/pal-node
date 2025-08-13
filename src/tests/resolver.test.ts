@@ -339,5 +339,90 @@ describe('Resolver', () => {
         '/base/path/library1.pal.lib'
       );
     });
+
+    it('should handle unsupported file types gracefully', async () => {
+      const promptAssembly: PromptAssembly = {
+        ...mockPromptAssembly,
+        imports: {
+          invalid: './invalid.txt',
+        },
+      };
+
+      // Should try to load as a library first, then check file extension
+      mockLoader.loadComponentLibrary.mockRejectedValue(
+        new Error('Unsupported file type')
+      );
+
+      await expect(
+        resolver.resolveDependencies(promptAssembly)
+      ).rejects.toThrow(PALResolverError);
+    });
+
+    it('should throw error when dependency cannot be loaded', async () => {
+      const promptAssembly: PromptAssembly = {
+        ...mockPromptAssembly,
+        imports: {
+          lib1: './missing.pal.lib',
+        },
+      };
+
+      mockLoader.loadComponentLibrary.mockRejectedValue(
+        new Error('Library not found')
+      );
+
+      await expect(
+        resolver.resolveDependencies(promptAssembly)
+      ).rejects.toThrow(PALResolverError);
+    });
+
+    it('should handle prompt assembly imports by converting to library format', async () => {
+      const promptAssembly: PromptAssembly = {
+        ...mockPromptAssembly,
+        imports: {
+          subPrompt: './sub.pal',
+        },
+      };
+
+      const subPrompt: PromptAssembly = {
+        ...mockPromptAssembly,
+        id: 'sub-prompt',
+      };
+
+      mockLoader.loadComponentLibrary.mockRejectedValue(
+        new Error('Not a library')
+      );
+      mockLoader.loadPromptAssembly.mockResolvedValue(subPrompt);
+
+      const result = await resolver.resolveDependencies(promptAssembly);
+
+      expect(mockLoader.loadPromptAssembly).toHaveBeenCalledWith('./sub.pal');
+
+      // Check that the prompt was converted to library format
+      expect(result.subPrompt).toBeDefined();
+      expect(result.subPrompt.library_id).toBe('sub-prompt');
+      expect(result.subPrompt.type).toBe('task');
+      expect(result.subPrompt.components).toHaveLength(1);
+      expect(result.subPrompt.components[0].name).toBe('prompt');
+    });
+
+    it('should cache resolved dependencies', async () => {
+      const promptAssembly: PromptAssembly = {
+        ...mockPromptAssembly,
+        imports: {
+          lib1: './library1.pal.lib',
+        },
+      };
+
+      mockLoader.loadComponentLibrary.mockResolvedValue(mockLibrary);
+
+      // First call should load from loader
+      await resolver.resolveDependencies(promptAssembly);
+
+      // Second call should use cache
+      await resolver.resolveDependencies(promptAssembly);
+
+      expect(mockLoader.loadComponentLibrary).toHaveBeenCalledTimes(1);
+      expect(cache.has('./library1.pal.lib')).toBe(true);
+    });
   });
 });
