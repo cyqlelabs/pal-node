@@ -26,13 +26,13 @@ This is the NodeJS port of the [Python version of PAL](https://github.com/cyqlel
 
 ```bash
 # Install with npm
-npm install pal-framework
+npm install -g pal-framework
 
 # Or with yarn
-yarn add pal-framework
+yarn global add pal-framework
 
 # Or with pnpm
-pnpm add pal-framework
+pnpm add -g pal-framework
 ```
 
 ## 📁 Project Structure
