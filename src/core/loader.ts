@@ -13,18 +13,49 @@ import {
 } from '../types/schema.js';
 
 /**
- * Handles loading and parsing of PAL files from local filesystem and URLs
+ * Handles loading and parsing of PAL files from local filesystem and URLs.
+ *
+ * The Loader provides unified file loading capabilities for all PAL file types:
+ * - Prompt assemblies (.pal)
+ * - Component libraries (.pal.lib)
+ * - Evaluation suites (.eval.yaml)
+ *
+ * Supports loading from both local files and remote URLs with automatic
+ * format validation using Zod schemas.
+ *
+ * @example
+ * ```typescript
+ * const loader = new Loader();
+ *
+ * // Load a prompt assembly
+ * const assembly = await loader.loadPromptAssembly('api_design.pal');
+ *
+ * // Load from URL
+ * const library = await loader.loadComponentLibrary(
+ *   'https://example.com/libs/personas.pal.lib'
+ * );
+ * ```
  */
 export class Loader {
   private timeout: number;
   private abortController?: AbortController;
 
+  /**
+   * Initialize the loader.
+   *
+   * @param timeout - Timeout in milliseconds for HTTP requests when loading from URLs
+   */
   constructor(timeout = 30000) {
     this.timeout = timeout;
   }
 
   /**
-   * Load and validate a .pal prompt assembly file
+   * Load and validate a .pal prompt assembly file.
+   *
+   * @param pathOrUrl - Path to local .pal file or URL
+   * @returns Validated PromptAssembly object
+   * @throws {PALLoadError} If file cannot be loaded
+   * @throws {PALValidationError} If file format is invalid
    */
   async loadPromptAssembly(pathOrUrl: string): Promise<PromptAssembly> {
     const content = await this.loadContent(pathOrUrl);
@@ -47,7 +78,12 @@ export class Loader {
   }
 
   /**
-   * Load and validate a .pal.lib component library file
+   * Load and validate a .pal.lib component library file.
+   *
+   * @param pathOrUrl - Path to local .pal.lib file or URL
+   * @returns Validated ComponentLibrary object
+   * @throws {PALLoadError} If file cannot be loaded
+   * @throws {PALValidationError} If file format is invalid
    */
   async loadComponentLibrary(pathOrUrl: string): Promise<ComponentLibrary> {
     const content = await this.loadContent(pathOrUrl);
@@ -70,7 +106,12 @@ export class Loader {
   }
 
   /**
-   * Load and validate a .eval.yaml evaluation suite file
+   * Load and validate a .eval.yaml evaluation suite file.
+   *
+   * @param pathOrUrl - Path to local .eval.yaml file or URL
+   * @returns Validated EvaluationSuite object
+   * @throws {PALLoadError} If file cannot be loaded
+   * @throws {PALValidationError} If file format is invalid
    */
   async loadEvaluationSuite(pathOrUrl: string): Promise<EvaluationSuite> {
     const content = await this.loadContent(pathOrUrl);

@@ -64,19 +64,59 @@ class ComponentTemplateLoader extends nunjucks.FileSystemLoader {
 }
 
 /**
- * Compiles PAL prompt assemblies into executable prompt strings
+ * Compiles PAL prompt assemblies into executable prompt strings.
+ *
+ * The PromptCompiler is responsible for transforming PAL prompt assemblies
+ * into fully rendered prompt strings ready for LLM execution. It handles:
+ *
+ * - Template variable resolution and type checking
+ * - Component library imports and dependencies
+ * - Nunjucks template compilation with custom loaders
+ * - Variable validation and default value assignment
+ *
+ * @example
+ * ```typescript
+ * const compiler = new PromptCompiler();
+ * const prompt = await compiler.compileFromFile(
+ *   'prompts/api_design.pal',
+ *   { api_name: 'UserService', requirements: ['REST', 'JSON'] }
+ * );
+ * console.log(prompt);
+ * ```
  */
 export class PromptCompiler {
   private loader: Loader;
   private resolver: Resolver;
 
+  /**
+   * Initialize the compiler.
+   *
+   * @param loader - Optional Loader instance. If not provided, a default Loader is created.
+   */
   constructor(loader?: Loader) {
     this.loader = loader || new Loader();
     this.resolver = new Resolver(this.loader, new ResolverCache());
   }
 
   /**
-   * Compile a PAL file into a prompt string
+   * Compile a PAL file into a prompt string.
+   *
+   * @param palFile - Path to the .pal file to compile
+   * @param variables - Optional dictionary of variables to use in template rendering
+   * @returns The compiled prompt string ready for LLM execution
+   * @throws {PALLoadError} If the file cannot be loaded
+   * @throws {PALMissingVariableError} If required variables are missing
+   * @throws {PALCompilerError} If compilation fails
+   *
+   * @example
+   * ```typescript
+   * const compiler = new PromptCompiler();
+   * const prompt = await compiler.compileFromFile(
+   *   'code_review.pal',
+   *   { language: 'python', code: 'def add(a, b): return a + b' }
+   * );
+   * console.log(prompt);
+   * ```
    */
   async compileFromFile(
     palFile: string,
@@ -87,7 +127,18 @@ export class PromptCompiler {
   }
 
   /**
-   * Compile a prompt assembly into a final prompt string
+   * Compile a prompt assembly into a final prompt string.
+   *
+   * This is the core compilation method that processes a PromptAssembly object,
+   * resolves all dependencies, validates variables, and renders the final prompt.
+   *
+   * @param promptAssembly - The PromptAssembly object to compile
+   * @param variables - Dictionary of variables for template rendering
+   * @param basePath - Base path for resolving relative imports
+   * @returns The fully compiled and rendered prompt string
+   * @throws {PALMissingComponentError} If referenced components are not found
+   * @throws {PALMissingVariableError} If required variables are missing
+   * @throws {PALCompilerError} If template compilation fails
    */
   async compile(
     promptAssembly: PromptAssembly,
@@ -398,7 +449,23 @@ export class PromptCompiler {
   }
 
   /**
-   * Analyze template variables used in composition
+   * Analyze and extract undeclared template variables from the composition.
+   *
+   * This method helps identify which variables are referenced in the template
+   * but not explicitly declared in the variables section. Useful for debugging
+   * and validation.
+   *
+   * @param promptAssembly - The PromptAssembly to analyze
+   * @returns Set of undeclared variable names found in the composition
+   *
+   * @example
+   * ```typescript
+   * const compiler = new PromptCompiler();
+   * const loader = new Loader();
+   * const assembly = await loader.loadPromptAssembly('prompt.pal');
+   * const undeclared = compiler.analyzeTemplateVariables(assembly);
+   * console.log(`Undeclared variables: ${Array.from(undeclared)}`);
+   * ```
    */
   analyzeTemplateVariables(promptAssembly: PromptAssembly): Set<string> {
     const variables = new Set<string>();

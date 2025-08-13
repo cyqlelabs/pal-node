@@ -4,6 +4,9 @@ import Anthropic from '@anthropic-ai/sdk';
 import { PALExecutorError } from '../exceptions/core.js';
 import { ExecutionResult, PromptAssembly } from '../types/schema.js';
 
+// AbortSignal is available globally in Node.js 16+, but we need to reference it for ESLint
+declare const AbortSignal: typeof globalThis.AbortSignal;
+
 /**
  * Base interface for LLM clients
  */
@@ -24,7 +27,19 @@ export interface LLMClient {
 }
 
 /**
- * Mock LLM client for testing
+ * Mock LLM client for testing and development.
+ *
+ * Provides a mock implementation of the LLM client interface for testing
+ * PAL prompts without making actual API calls. Useful for unit tests and
+ * local development.
+ *
+ * @example
+ * ```typescript
+ * const mockClient = new MockLLMClient('Test response');
+ * const executor = new PromptExecutor(mockClient);
+ * const result = await executor.execute(assembly, variables);
+ * console.log(result.response); // "Test response"
+ * ```
  */
 export class MockLLMClient implements LLMClient {
   private response: string;
@@ -32,6 +47,11 @@ export class MockLLMClient implements LLMClient {
   private lastPrompt = '';
   private lastModel = '';
 
+  /**
+   * Initialize the mock client.
+   *
+   * @param response - The mock response string to return from generate()
+   */
   constructor(response = 'Mock response') {
     this.response = response;
   }
@@ -79,11 +99,34 @@ export class MockLLMClient implements LLMClient {
 }
 
 /**
- * OpenAI API client
+ * OpenAI API client for GPT model integration.
+ *
+ * Implements the LLM client interface for OpenAI's GPT models. Requires
+ * the 'openai' package to be installed.
+ *
+ * @example
+ * ```typescript
+ * const client = new OpenAIClient('sk-...');
+ * const executor = new PromptExecutor(client);
+ * const result = await executor.execute(
+ *   compiledPrompt,
+ *   assembly,
+ *   'gpt-4',
+ *   0.7,
+ *   2000
+ * );
+ * console.log(result.response);
+ * ```
  */
 export class OpenAIClient implements LLMClient {
   private client: OpenAI;
 
+  /**
+   * Initialize the OpenAI client.
+   *
+   * @param apiKey - OpenAI API key. If not provided, will use OPENAI_API_KEY env var.
+   * @throws {PALExecutorError} If the openai package is not installed
+   */
   constructor(apiKey?: string) {
     try {
       this.client = new OpenAI({ apiKey });
@@ -135,11 +178,34 @@ export class OpenAIClient implements LLMClient {
 }
 
 /**
- * Anthropic API client
+ * Anthropic API client for Claude model integration.
+ *
+ * Implements the LLM client interface for Anthropic's Claude models. Requires
+ * the '@anthropic-ai/sdk' package to be installed.
+ *
+ * @example
+ * ```typescript
+ * const client = new AnthropicClient('sk-ant-...');
+ * const executor = new PromptExecutor(client);
+ * const result = await executor.execute(
+ *   compiledPrompt,
+ *   assembly,
+ *   'claude-3-opus-20240229',
+ *   0.7,
+ *   1000
+ * );
+ * console.log(result.response);
+ * ```
  */
 export class AnthropicClient implements LLMClient {
   private client: Anthropic;
 
+  /**
+   * Initialize the Anthropic client.
+   *
+   * @param apiKey - Anthropic API key. If not provided, will use ANTHROPIC_API_KEY env var.
+   * @throws {PALExecutorError} If the @anthropic-ai/sdk package is not installed
+   */
   constructor(apiKey?: string) {
     try {
       this.client = new Anthropic({ apiKey });
@@ -193,20 +259,76 @@ export class AnthropicClient implements LLMClient {
 }
 
 /**
- * Executes compiled prompts with LLM clients and provides observability
+ * Executes compiled prompts with LLM clients and provides observability.
+ *
+ * The PromptExecutor handles the execution of compiled PAL prompts through
+ * various LLM providers. It provides:
+ *
+ * - Unified interface for different LLM providers (OpenAI, Anthropic, etc.)
+ * - Execution tracking and history management
+ * - Structured logging and observability
+ * - Error handling and retry logic
+ * - Live pricing data for cost estimation
+ *
+ * @example
+ * ```typescript
+ * const client = new AnthropicClient('sk-ant-...');
+ * const executor = new PromptExecutor(client);
+ * const compiler = new PromptCompiler();
+ * const compiled = await compiler.compileFromFile('prompt.pal');
+ * const result = await executor.execute(
+ *   compiled,
+ *   assembly,
+ *   'claude-3-opus-20240229',
+ *   0.7
+ * );
+ * console.log(result.response);
+ * ```
  */
 export class PromptExecutor {
   private llmClient: LLMClient;
   private logFile: string | undefined;
   private executionHistory: ExecutionResult[] = [];
+  private pricingCache: Record<string, unknown> | undefined;
+  private cacheExpiry: Date | undefined;
+  private readonly cacheTimeout = 5 * 60 * 1000; // 5 minutes in milliseconds
+  private readonly pricingUrl =
+    'https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json';
 
+  /**
+   * Initialize the executor.
+   *
+   * @param llmClient - An LLM client instance (OpenAIClient, AnthropicClient, etc.)
+   * @param logFile - Optional path to write execution logs in JSON format
+   */
   constructor(llmClient: LLMClient, logFile?: string) {
     this.llmClient = llmClient;
     this.logFile = logFile;
   }
 
   /**
-   * Execute a compiled prompt and return structured results
+   * Execute a compiled prompt and return structured results.
+   *
+   * @param compiledPrompt - The compiled prompt string from PromptCompiler
+   * @param promptAssembly - The original PromptAssembly object
+   * @param model - Model identifier (e.g., "gpt-4", "claude-3-opus-20240229")
+   * @param temperature - Sampling temperature (0.0 to 1.0)
+   * @param maxTokens - Maximum tokens to generate
+   * @param options - Additional model-specific parameters
+   * @returns ExecutionResult containing the response and metadata
+   * @throws {PALExecutorError} If the LLM API call fails
+   *
+   * @example
+   * ```typescript
+   * const result = await executor.execute(
+   *   'Analyze this code...',
+   *   assembly,
+   *   'gpt-4',
+   *   0.3,
+   *   2000
+   * );
+   * console.log(result.response);
+   * ```
    */
   async execute(
     compiledPrompt: string,
@@ -260,7 +382,7 @@ export class PromptExecutor {
         executionTimeMs: executionTime,
         inputTokens: responseData.inputTokens,
         outputTokens: responseData.outputTokens,
-        costUsd: this.estimateCost(
+        costUsd: await this.estimateCost(
           model,
           responseData.inputTokens,
           responseData.outputTokens
@@ -424,46 +546,112 @@ export class PromptExecutor {
   }
 
   /**
-   * Estimate cost based on token counts (rough estimates)
+   * Fetch live pricing data from LiteLLM API with caching
    */
-  private estimateCost(
+  private async fetchLivePricing(): Promise<
+    Record<string, unknown> | undefined
+  > {
+    const now = new Date();
+
+    if (this.pricingCache && this.cacheExpiry && now < this.cacheExpiry) {
+      return this.pricingCache;
+    }
+
+    try {
+      const response = await fetch(this.pricingUrl, {
+        signal: AbortSignal.timeout(10000), // 10 second timeout
+      });
+
+      if (!response.ok) {
+        console.warn(
+          '[PAL] Failed to fetch live pricing data: HTTP',
+          response.status
+        );
+        return undefined;
+      }
+
+      this.pricingCache = (await response.json()) as Record<string, unknown>;
+      this.cacheExpiry = new Date(now.getTime() + this.cacheTimeout);
+      console.log('[PAL] Fetched and cached live pricing data');
+      return this.pricingCache;
+    } catch (error) {
+      console.warn(
+        '[PAL] Failed to fetch live pricing data:',
+        error instanceof Error ? error.message : String(error)
+      );
+      return undefined;
+    }
+  }
+
+  /**
+   * Estimate cost based on token counts using live pricing data
+   */
+  private async estimateCost(
     model: string,
     inputTokens?: number,
     outputTokens?: number
-  ): number | undefined {
-    if (!inputTokens || !outputTokens) {
+  ): Promise<number | undefined> {
+    if (inputTokens == null || outputTokens == null) {
       return undefined;
     }
 
-    // Rough cost estimates per 1K tokens (as of 2024)
-    const costTable: Record<string, { input: number; output: number }> = {
-      // OpenAI models
-      'gpt-4': { input: 0.03, output: 0.06 },
-      'gpt-4-turbo': { input: 0.01, output: 0.03 },
-      'gpt-3.5-turbo': { input: 0.0015, output: 0.002 },
-      // Anthropic models
-      'claude-3-opus-20240229': { input: 0.015, output: 0.075 },
-      'claude-3-sonnet-20240229': { input: 0.003, output: 0.015 },
-      'claude-3-haiku-20240307': { input: 0.00025, output: 0.00125 },
-    };
+    const pricingData = await this.fetchLivePricing();
+    if (!pricingData) {
+      return undefined;
+    }
 
-    // Find matching model (prefix matching)
-    let modelCosts: { input: number; output: number } | undefined;
-    for (const [modelKey, costs] of Object.entries(costTable)) {
-      if (model.startsWith(modelKey)) {
-        modelCosts = costs;
-        break;
+    // Look for a direct match
+    let modelPricing = pricingData[model] as
+      | Record<string, unknown>
+      | undefined;
+
+    // Fallback for openrouter models
+    if (!modelPricing) {
+      const openrouterKey = `openrouter/${model}`;
+      modelPricing = pricingData[openrouterKey] as
+        | Record<string, unknown>
+        | undefined;
+    }
+
+    // Fallback for models without provider prefix
+    if (!modelPricing) {
+      const [, ...modelNameParts] = model.split('/');
+      if (modelNameParts.length > 0) {
+        const modelName = modelNameParts.join('/');
+        modelPricing = pricingData[modelName] as
+          | Record<string, unknown>
+          | undefined;
       }
     }
 
-    if (!modelCosts) {
-      return undefined; // Unknown model
+    if (modelPricing) {
+      try {
+        const inputCostPerToken = Number(modelPricing.input_cost_per_token);
+        const outputCostPerToken = Number(modelPricing.output_cost_per_token);
+
+        if (isNaN(inputCostPerToken) || isNaN(outputCostPerToken)) {
+          console.warn(
+            `[PAL] Could not parse pricing for model ${model}:`,
+            modelPricing
+          );
+          return undefined;
+        }
+
+        const inputCost = inputTokens * inputCostPerToken;
+        const outputCost = outputTokens * outputCostPerToken;
+        return inputCost + outputCost;
+      } catch (error) {
+        console.warn(
+          `[PAL] Could not parse pricing for model ${model}:`,
+          modelPricing,
+          error
+        );
+        return undefined;
+      }
     }
 
-    const inputCost = (inputTokens / 1000) * modelCosts.input;
-    const outputCost = (outputTokens / 1000) * modelCosts.output;
-
-    return inputCost + outputCost;
+    console.warn(`[PAL] Model not found in live pricing data: ${model}`);
+    return undefined;
   }
 
   /**
