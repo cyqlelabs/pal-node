@@ -74,6 +74,9 @@ export class Resolver {
     const errors: string[] = [];
     const composition = promptAssembly.composition.join('\n');
 
+    // Get known import aliases
+    const importAliases = new Set(Object.keys(promptAssembly.imports));
+
     // Extract component references (alias.component format)
     const componentRegex =
       /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*\.[a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g;
@@ -87,6 +90,12 @@ export class Resolver {
       }
 
       const [alias, componentName] = reference.split('.');
+
+      // Only validate if the alias is actually an import alias
+      // This avoids false positives from loop variables like "intent.name" or "turn.content"
+      if (!alias || !importAliases.has(alias)) {
+        continue;
+      }
 
       if (!alias || !resolvedLibraries[alias]) {
         errors.push(`Unknown import alias: ${alias}`);

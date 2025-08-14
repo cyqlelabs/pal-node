@@ -198,6 +198,7 @@ describe('Resolver', () => {
     it('should validate existing component references', () => {
       const promptAssembly: PromptAssembly = {
         ...mockPromptAssembly,
+        imports: { lib1: './library1.pal.lib' },
         composition: ['{{ lib1.helper }} says hello'],
       };
 
@@ -216,6 +217,7 @@ describe('Resolver', () => {
     it('should detect unknown import aliases', () => {
       const promptAssembly: PromptAssembly = {
         ...mockPromptAssembly,
+        imports: { unknown: './unknown.pal.lib' },
         composition: ['{{ unknown.helper }} says hello'],
       };
 
@@ -232,6 +234,7 @@ describe('Resolver', () => {
     it('should detect missing components', () => {
       const promptAssembly: PromptAssembly = {
         ...mockPromptAssembly,
+        imports: { lib1: './library1.pal.lib' },
         composition: ['{{ lib1.missing }} says hello'],
       };
 
@@ -252,6 +255,7 @@ describe('Resolver', () => {
     it('should handle references with whitespace', () => {
       const promptAssembly: PromptAssembly = {
         ...mockPromptAssembly,
+        imports: { lib1: './library1.pal.lib' },
         composition: ['{{  lib1.helper  }} says hello'],
       };
 
@@ -264,6 +268,34 @@ describe('Resolver', () => {
         resolvedLibraries
       );
 
+      expect(errors).toEqual([]);
+    });
+
+    it('should ignore loop variables and non-import references', () => {
+      const promptAssembly: PromptAssembly = {
+        ...mockPromptAssembly,
+        imports: { lib1: './library1.pal.lib' },
+        composition: [
+          '{{ lib1.helper }} says hello',
+          '{% for intent in available_intents %}',
+          '- {{ intent.name }}: {{ intent.description }}',
+          '{% endfor %}',
+          '{% for turn in conversation_history %}',
+          '{{ turn.content }}',
+          '{% endfor %}',
+        ],
+      };
+
+      const resolvedLibraries = {
+        lib1: mockLibrary,
+      };
+
+      const errors = resolver.validateReferences(
+        promptAssembly,
+        resolvedLibraries
+      );
+
+      // Should only validate lib1.helper, not intent.name, intent.description, or turn.content
       expect(errors).toEqual([]);
     });
   });
