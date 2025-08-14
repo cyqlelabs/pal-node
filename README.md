@@ -1,4 +1,5 @@
-# PAL - Prompt Assembly Language
+<h1 align="center">PAL - Prompt Assembly Language</h1>
+<p align="center"><img src="logo-s.png" /></p>
 
 [![Node.js](https://img.shields.io/badge/node-18+-blue.svg)](https://nodejs.org/en/download/)
 [![TypeScript](https://img.shields.io/badge/typescript-5.0+-blue.svg)](https://www.typescriptlang.org/)
